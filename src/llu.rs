@@ -239,7 +239,33 @@ pub async fn unsafer(){
         
     };
 
-    println!("new `a` is {}", new_a);
+    println!("new `a` is {}", new_a); 
+
+
+
+    // converting integer to big endian bytes
+    let idx = 3 as i32; // 32 bits means 4 bytes
+    let num_bytes = idx.to_be_bytes();
+
+    let msg = "get";
+    let msg_bytes = msg.as_bytes();
+    /* 
+        msg is 3 bytes thus in hex it can be represented in 6 chars 
+        sinc every 2 chars is 1 byte.
+
+        `get` payload in hex will be 0x676574 since `g` is 67 in hex
+        which is 103 in decimal which is in form of utf8 bytes means that 
+        every char in form of utf8 bytes must be in range 0 up to 255
+        also every char in hex is 4 bits in binary which means every two
+        chars in hex is 1 byte in utf8 bytes thus 0x676574 is 3 bytes in 
+        form of utf8 bytes also chars can be represented in form of utf16 
+        or 2 bytes long like `get` is 0xfeff0067feff0065feff0074 in hex which
+        is 12 bytes long 
+
+    */
+    let playload_hex_ascii = msg_bytes.iter().map(|b| format!("{:x}", b)).collect::<String>();
+    println!("{playload_hex_ascii:}");
+
 
     ///// -------------- union, enum and struct -------------- /////
     //// offset is the size in bytes and in order to get
@@ -261,6 +287,7 @@ pub async fn unsafer(){
         c: u32, //// we can fill this in a hex form
     }
 
+    // utf8 hex representation
     let obj = Object{
         //// since `a` field is of type u8 thus we have to fill 
         //// it with only two chars in hex since every 4 bits 
@@ -308,6 +335,10 @@ pub async fn unsafer(){
 
     let both = MultiEnum::B(2.5, 4);
     let strc = MultiEnum::C{x: 24, b: 25};
+    
+    if let MultiEnum::A(2) = both{
+        info!("is A(2)");
+    }
 
     #[repr(u32)]
     enum Tag{I, F}
