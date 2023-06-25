@@ -6,6 +6,30 @@ use crate::*;
 
 async fn test(){
 
+
+    /* returning the result of future object which is fn pointer */
+    type Func = fn() -> String;
+    pub async fn run(fut: impl std::future::Future<Output = fn() -> String>) -> Func{
+        // let method = fut.await;
+        // let res = method();
+        // method
+        fut.await
+    }
+    struct Game{
+        pub func: Func
+    }
+    let game = Game{
+        func: run(async { 
+            fn cmd() -> String{
+                String::from("wildonion")
+            }
+            cmd as Func
+        }).await
+    }; 
+
+    let res = game.func;
+
+
     trait InterfaceMe{}
     impl InterfaceMe for () {}
     pub type BoxeFutureShodeh = Box<dyn std::future::Future<Output=BoxedShodeh>>;
