@@ -250,8 +250,6 @@ pub async fn unsafer(){
     let msg = "get";
     let msg_bytes = msg.as_bytes();
     /* 
-        msg is 3 bytes thus in hex it can be represented in 6 chars 
-        sinc every 2 chars is 1 byte.
 
         `get` payload in hex will be 0x676574 since `g` is 67 in hex
         which is 103 in decimal which is in form of utf8 bytes means that 
@@ -259,8 +257,10 @@ pub async fn unsafer(){
         also every char in hex is 4 bits in binary which means every two
         chars in hex is 1 byte in utf8 bytes thus 0x676574 is 3 bytes in 
         form of utf8 bytes also chars can be represented in form of utf16 
-        or 2 bytes long like `get` is 0xfeff0067feff0065feff0074 in hex which
-        is 12 bytes long 
+        or 2 bytes long, like `get` is 0xfeff0067feff0065feff0074 in hex which
+        is 12 bytes long or 24 hex chars because `get` has 3 chars which in 
+        utf16 form every char has size of 2 bytes which is 4 chars in hex 
+        thus 3 * 4 = 12 bytes in total for 3 chars in utf16 form.
 
     */
     let playload_hex_ascii = msg_bytes.iter().map(|b| format!("{:x}", b)).collect::<String>();
