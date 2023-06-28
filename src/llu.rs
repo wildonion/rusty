@@ -264,7 +264,9 @@ pub async fn unsafer(){
 
         representation of char in utf8 will be fallen in range 0 up to 255
         since 2**8 is 256 and in u16 will be fallen in range 0 up to 65536
-        since 2**16 is 65536.
+        since 2**16 is 65536, accordingly each char has longer length of hex
+        in u16 like a char in hex has 4 chars in hex and in u8 has 2 chars
+        in hex.
 
     */
     let playload_hex_ascii = msg_bytes.iter().map(|b| format!("{:x}", b)).collect::<String>();

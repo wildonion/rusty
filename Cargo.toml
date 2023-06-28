@@ -59,11 +59,3 @@ twitter-v2 = "0.1.8"
 [[bin]]
 name = "ltg"
 path = "src/main.rs"
-
-[[bin]]
-name = "layering"
-path = "src/layering.rs"
-
-[[bin]]
-name = "prisoners"
-path = "src/prisoners.rs"

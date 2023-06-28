@@ -63,7 +63,6 @@ use log::{error, info};
 
 /* ltg: lifetimes + traits + generics */
 mod llu;
-mod layering;
 mod ltg1;
 mod ltg2;
 mod ltg3;
