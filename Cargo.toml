@@ -57,5 +57,5 @@ openssl = { version = "0.10", features = ["v110"] }
 twitter-v2 = "0.1.8"
 
 [[bin]]
-name = "ltg"
+name = "rusty"
 path = "src/main.rs"
