@@ -101,6 +101,9 @@ async fn test(){
         values: Vec<u8>
     }
     let announced_values: Vec<Round> = vec![];
+
+    ///////------ closures can capture their env vars into their scopes but function can't 
+    ///////------ in function we must pass the actual type as the param to mutate it or read it
     
     /* 
         closures can capture env vars so we can access them inside the closure method, with 

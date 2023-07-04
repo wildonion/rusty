@@ -559,12 +559,13 @@ pub async fn unsafer(){
         of that type or basically if the type is behind a pointer there it can'e be moved
 
 
-        - [x] can’t borrow the type as mutable if it’s behind an immutable pointer already like can’t push into a vector is there is a closure that has captured the vector into its scope.
+        - [x] can’t move out of type like deref or clone it if the type is behind a mutable reference 
+        - [x] can’t borrow the type as mutable if it’s behind an immutable pointer already like can’t push into a vector if there is a closure that has captured the vector into its scope.
         - [x] returning struct in place without creating new instance will allocate nothing on the stack and will be placed in caller space directly so we can return &Sruct{} 
         - [x] pass mutable ref to mutate the main type in other scopes like &mut self  
         - [x] we can return pointer with a valid lifetime like by using the &self lifetime to slice types from methods 
-        - [x] can't return pointer from the function if the pointer is pointing to a heap data
-        - [x] can't move the type into new scopes if the data is behind a pointer (avoid dangling pointer issue)
+        - [x] can't return pointer from the function if the pointer is pointing to a heap data (avoid dangling pointer issue)
+        - [x] can't move the type into new scopes or deref it if the data is behind a pointer 
         - [x] functions can’t access the outside-of-their-scope’s types thus we must pass types by reference to their scopes 
         - [x] types that don’t implement Copy trait will be moved by default in rust so we can either clone or borrow them to prevent from moving 
 
@@ -858,14 +859,19 @@ pub async fn unsafer(){
         let p = pointee_arr; // pointee_arr is a reference itself thus no need to clone or borrow it from the outside of this scope
     
         let third = Rc::clone(&another_rc_pointee_arr);
-        
         let ref_counter = Rc::strong_count(&rc_pointee_arr); // counter is 3 right now
 
 
-        
+
         struct Gadget{
             me: Weak<Gadget>, 
             you: Rc<Gadget>
+        }
+
+        #[derive(Serialize, Deserialize, BorshDeserialize, BorshSerialize, Clone, Copy, Debug, Default)]
+        struct Generic<'info, Gadget>{
+            pub gen: Gadget,
+            pub coded_data: &'info [u8]
         }
 
         impl Gadget{

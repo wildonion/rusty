@@ -71,6 +71,17 @@ async fn test(){
     dejavo.await;
 
 
+
+    trait Message{}
+    trait Handler<M: Message + Send + Sync>{
+        fn handle(&mut self, msg: M){}
+    }
+    struct Actor;
+    impl<M: Message + Send + Sync> Handler<M> for Actor{
+        fn handle(&mut self, msg: M) {}
+    }
+
+
     struct Link<'link, D, F: Send + Sync> 
     where D: Send + Sync,
     F: FnOnce() -> String{
@@ -193,9 +204,7 @@ async fn test(){
             of describe to fn col<impl Trait>() later
         ------------------------------------------ */
 
-        const fn resize() -> i32{
-            32
-        }
+        
         pub const FUNC: fn() -> i32 = {
             const fn resize() -> i32{
                 32
@@ -240,7 +249,8 @@ async fn test(){
                 ()
             });
 
-        }
+        } 
+
 
         //////-------------------------------------------------------------------------------
         ////// we can't return impl Trait as the return type of fn() pointer or as its param

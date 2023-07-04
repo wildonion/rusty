@@ -426,4 +426,11 @@ fn test(){
 
 	}
 
+
+    let mut slice = &mut [1u8; 32];
+    slice[0] = 3;
+
+    
+
+
 }
