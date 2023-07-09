@@ -7,7 +7,52 @@ use crate::*;
 
 async fn test(){
 
-    trait Interface{}
+    const CONST: () = ();
+    let traits: &[&dyn Fn()];
+    let traits_: &[Box<dyn Fn()>];
+    type CallbackHell = fn(Callback) -> u8;
+    struct Callback;
+    impl Interface for Callback{
+        fn check(&mut self){}
+    }
+
+    struct Wannet<'a, G: 'a + Fn() -> Callback, T = fn(Callback) -> String>{
+        pub data: &'a G, /* if we want to have pointer, lifetime is required */
+        pub info: T
+    }
+
+    impl<'a, G: Fn() -> Callback, T> Wannet<'a, G, T>{ 
+        /* 
+            a mutable pointer to self lets us to have the instance later on 
+            in other scopes when we call its methods on it since it's behind 
+            a pointer its ownership won't be lost
+        */
+        fn implement(&mut self) -> impl Interface{
+            Callback
+        }
+
+        fn ret_func(f: T) where T: FnMut(){
+
+            fn run_fut<G>(fut: impl std::future::Future<Output = fn() -> String>) 
+                -> impl std::future::Future<Output = String>
+                where G: std::future::Future<Output = String>{
+                async {
+                    "wildonion".to_string()
+                }
+            }
+            
+            let pinned = std::pin::Pin::new(&mut "wildonion".to_string());
+
+        }
+
+        fn implant(&mut self, mut imp: impl Interface + Send + Sync + 'static){
+            imp.check(); /* since check() is a mutable method the impl must be passed mutably */
+        }
+    }
+
+    trait Interface{
+        fn check(&mut self);
+    }
 
 
     // **************************************************************************
@@ -46,7 +91,7 @@ async fn test(){
     //// we can call the closure directly by calling the 
     //// d_boxed type, means we're calling the Boxed type
     //// which is a pointer to a closure
-    d_boxed(); 
+    d_boxed();
     //// since d_boxed is a Boxed type which is a pointer 
     //// to a heap data which is a closure tratit (traits are ?Sized) thus in order
     //// to call the closure directrly we can deref the Boxed type 
@@ -151,6 +196,10 @@ async fn test(){
                 to it's type and be bounded to Unpin trait if we need to access the pinned value outside 
                 of the current scope that we're awaiting on the object 
 
+        */
+        /* 
+            since the future is behind a mutable pointer which can mutate the future 
+            itself inside the ram thus it must be first unpinned 
         */
         async fn create_component(async_block: &mut (impl futures::Future<Output=String> + std::marker::Unpin)){
             

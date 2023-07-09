@@ -68,16 +68,22 @@ async fn test(){
 	pub const CHARSET: &[u8] = b"0123456789";
     pub fn async_gen_random_idx(idx: usize) -> futures_util::future::BoxFuture<'static, usize>{ // NOTE - pub type BoxFuture<'a, T> = Pin<alloc::boxed::Box<dyn Future<Output = T> + Send + 'a>>
 	    async move{
-		if idx <= CHARSET.len(){
-		    idx
-		} else{
-		    gen_random_idx(rand::random::<u8>() as usize)
-		}
+            if idx <= CHARSET.len(){
+                idx
+            } else{
+                gen_random_idx(rand::random::<u8>() as usize)
+            }
 	    }.boxed() //// wrap the future in a Box, pinning it
 	}
 	pub fn ret_boxed_future() -> std::pin::Pin<Box<dyn futures::future::Future<Output=()>>>{ //// Pin requires the pointer to the type and since traits are dynamic types thir pointer can be either &dyn ... or Box<dyn...>
-	    Box::pin(async move{
-		()
+	    /* 
+            Box is just a wrapper to store data on the heap with a valid lifetime 
+            means that all the methods of the type inside the Box can be called on 
+            the Boxed type too. also we must use Box::ping if you need to access the 
+            pinned value outside of the current scope
+        */
+        Box::pin(async move{
+		    ()
 	    })
 	}
 

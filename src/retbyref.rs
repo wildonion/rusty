@@ -131,7 +131,7 @@ fn test(){
                 Chaharomi{ //// enum variant can also be a struct
                     name: String,
                     age: u32,
-                }
+                },
             }
 
 
@@ -139,11 +139,11 @@ fn test(){
 
             match ine{
                 Chie::Avali(value) if value == 23 => { //// matching on the Avali arm if the value was only 23
-                println!("u8 eeee");
+                    println!("u8 eeee");
 
                 },
                 Chie::Dovomi(value) if value == "wildonion".to_string() => { //// matching on the Dovomi arm if the value was only "wildonion" string
-                println!("stringeeee");
+                    println!("stringeeee");
                 },
                 Chie::Chaharomi{name, ..} => { //// we only care about name and the rest of field will be filled by `..`
 
@@ -158,7 +158,7 @@ fn test(){
 
                 },
                 _ => { //// for Sevomi fields
-                println!("none of them");
+                    println!("none of them");
                 }
             }
 
@@ -426,9 +426,12 @@ fn test(){
 
 	}
 
-
-    let mut slice = &mut [1u8; 32];
+    let mut arr = [1u8; 32];
+    let mut slice = &mut arr;
     slice[0] = 3;
+
+    // here arr is mutated too
+    // ...
 
     
 
