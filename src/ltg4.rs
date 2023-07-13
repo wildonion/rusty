@@ -21,9 +21,9 @@ async fn test(){
         pub f: T //// f is a FnMut closure which accepts Req and Res instances as its params 
     }
     let cb = |req, res| { async {res} /* the return type of the closure must be future object */};
-    let instance = Test{f: cb};
+    let mut instance = Test{f: cb};
     let response = (instance.f)(req, res).await;
-    
+
     //// traits as a field (param) or return type must be behind a 
     //// pointer using Box or &dyn but as the type of a passed in 
     //// param the generic type of the param must be bounded to that trait.

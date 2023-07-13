@@ -559,7 +559,7 @@ pub async fn unsafer(){
         of that type or basically if the type is behind a pointer there it can'e be moved
 
         - [x] can’t deref a shared ref since it’s being used by other scopes and if we deref it it’ll be converted into owned type which will drop the lifetime of the pointer from the ram and causes to have no access to it which leads us to having dangling pointer
-        - [x] can’t move out of type like deref or clone it if the type is behind a mutable or shared reference 
+        - [x] can’t move out of type like deref or calling to_owned() on it if the type is behind a mutable or shared reference we must borrow or clone it
         - [x] can’t borrow the type as mutable if it’s behind an immutable pointer already like can’t push into a vector if there is a closure that has captured the vector into its scope.
         - [x] returning struct in place without creating new instance will allocate nothing on the stack and will be placed in caller space directly so we can return &Sruct{} 
         - [x] pass mutable ref to mutate the main type in other scopes like &mut self  

@@ -33,6 +33,17 @@ async fn test(){
 
         fn ret_func(f: T) where T: FnMut(){
 
+            /* 
+                basically we have to put the slice types and dynamic types like traits behind pointer 
+                to have them as types in scopes cause they’re not sized like &[u8] and &dyn Trait or 
+                use Box for traits, for traits we can use them as the followings
+                    - return type of methods like -> impl Trait
+                    - method param type bounded to that trait like using some_param: impl Trait
+                    - method param type like put them behind pointer
+                        - Box<dyn Fn()>, 
+                        - &dyn Fn()
+                    - in method and struct signatures like bounding generic to traits using where G: Trait
+            */
             fn run_fut<G>(fut: impl std::future::Future<Output = fn() -> String>) 
                 -> impl std::future::Future<Output = String>
                 where G: std::future::Future<Output = String>{
