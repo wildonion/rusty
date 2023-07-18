@@ -15,6 +15,9 @@ async fn test(){
     impl Interface for Callback{
         fn check(&mut self){}
     }
+    impl Callback{
+        pub fn run(&self){}
+    }
 
     struct Wannet<'a, G: 'a + Fn() -> Callback, T = fn(Callback) -> String>{
         pub data: &'a G, /* if we want to have pointer, lifetime is required */
@@ -44,12 +47,17 @@ async fn test(){
                         - &dyn Fn()
                     - in method and struct signatures like bounding generic to traits using where G: Trait
             */
-            fn run_fut<G>(fut: impl std::future::Future<Output = fn() -> String>) 
+            fn run_fut<G: Into<Callback>>(fut: impl std::future::Future<Output = fn() -> String>, generic: G) 
                 -> impl std::future::Future<Output = String>
                 where G: std::future::Future<Output = String>{
+                
+                let into_g = generic.into();
+                into_g.run();
+
                 async {
                     "wildonion".to_string()
                 }
+            
             }
             
             let pinned = std::pin::Pin::new(&mut "wildonion".to_string());
