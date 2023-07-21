@@ -27,6 +27,17 @@ async fn test(){
 
     fn run_cfg(){}
     
+    /* 
+        Box is a smart pointer to its underlying type thus Box::new("wildonion".to_string()) is the same as 
+        "wildonion".to_string() which means *Box::new("wildonion".to_string()) is the str type of "wildonion".to_string()
+        in our case *boxed_me returns the closure trait inside the Box 
+    */
+    let boxed_me = Box::new(||{
+        "wildonion".to_string()
+    });
+    let me = *boxed_me;
+    let ret_ = me(); /* calling the closure trait */
+
     /* returning the result of future object which is fn pointer */
     type Func = fn() -> String;
     pub async fn run(fut: impl std::future::Future<Output = fn() -> String>) -> Func{
