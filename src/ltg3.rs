@@ -7,6 +7,26 @@ use crate::*;
 async fn test(){
 
 
+
+    /* closure can be used as fn() */
+    #[derive(Default)]
+    struct Config<'lifetime, I, V = fn() -> ()> /* default type parameter doesn't need to be initialized when we're creating the instance of the struct */
+    where I: FnMut(u8) -> String{
+        data: V,
+        id: I,
+        pid: &'lifetime str
+    }
+
+    let cfg = Config::<_, _>{
+        data: &||{},
+        id: &|pid: u8|{
+            "an-id".to_string()
+        },
+        pid: "pid"
+    };
+
+    fn run_cfg(){}
+    
     /* returning the result of future object which is fn pointer */
     type Func = fn() -> String;
     pub async fn run(fut: impl std::future::Future<Output = fn() -> String>) -> Func{

@@ -47,6 +47,11 @@ async fn test(){
                         - &dyn Fn()
                     - in method and struct signatures like bounding generic to traits using where G: Trait
             */
+
+            fn implement_<G>(mut g: impl Interface) where G: 'static{
+                g.check(); /* check method is mutable thus g must be mutable */
+            } 
+
             fn run_fut<G: Into<Callback>>(fut: impl std::future::Future<Output = fn() -> String>, generic: G) 
                 -> impl std::future::Future<Output = String>
                 where G: std::future::Future<Output = String>{
