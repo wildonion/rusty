@@ -6,7 +6,74 @@ use crate::*;
 
 async fn test(){
 
+    // =======--------------===============---------------============--------------
+    // =======-------------- FUTURE OBJECT DEMENSTRATION ---------------============
+    // =======--------------===============---------------============--------------
+    /* 
+        when we use Default trait all the fields must be sized since rust needs to 
+        know the types to fill them with default values 
+    */
+    #[derive(Debug)] 
+    struct Future<T: Clone>{
+        data: Box<Option<T>>,
+        is_polled: bool,
+        data_receiver: tokio::sync::oneshot::Receiver<T>
+    }
+    impl<T: Clone> Future<T>{
 
+        /*
+            by mutating &mut type the actual type or the 
+            instance of the struct will be mutated too 
+        */
+        fn poll(&mut self) -> (){
+            
+            loop{
+                if let Ok(data) = self.data_receiver.try_recv(){
+                    /* setting the is_polled to true once we receive the data */
+                    self.is_polled = true;
+                    self.data = Box::new(Some(data));
+                    break;
+                }
+            }
+        } 
+
+        fn ready(&self) -> Box<Option<T>>{
+            /* 
+                since self is behind a shared reference thus we can't move it into a new type  
+                thus we must clone it to pass its clone instead of moving the entire type
+            */
+            if self.is_polled{
+                let d = self.data.clone(); 
+                d
+            } else{
+                Box::new(None)
+            }
+        }
+    }
+    fn fut() -> String{
+        "wildonion".to_string()
+    }
+    let (data_sender, data_receiver) = tokio::sync::oneshot::channel::<Func>();
+    let mut future_object = Future::<Func>{
+        data: Box::new(None),
+        is_polled: false,
+        data_receiver,
+    };
+    data_sender.send(fut);
+    future_object.poll();
+    let data = {
+        (*future_object.ready())
+            .unwrap()
+        }();
+    if data == "wildonion".to_string(){
+        info!("solved future object");
+    } else{
+        /* it depends when the sender sends the data to the channel */
+        info!("not solved yet");
+    }
+    // =======--------------===============---------------============---------------
+    // =======--------------===============---------------============---------------
+    // =======--------------===============---------------============---------------
 
     /* closure can be used as fn() */
     #[derive(Default)]
@@ -35,11 +102,11 @@ async fn test(){
     let boxed_me = Box::new(||{
         "wildonion".to_string()
     });
-    let me = *boxed_me;
-    let ret_ = me(); /* calling the closure trait */
+    let me = &*boxed_me; /* dereferencing the Box returns the actual type inside the Box */
+    let ret_ = &me(); /* calling the closure trait */
 
-    /* returning the result of future object which is fn pointer */
     type Func = fn() -> String;
+    /* returning the result of future object which is fn pointer */
     pub async fn run(fut: impl std::future::Future<Output = fn() -> String>) -> Func{
         // let method = fut.await;
         // let res = method();

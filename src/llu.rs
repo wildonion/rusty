@@ -394,7 +394,6 @@ pub async fn unsafer(){
     name_ptr = name.as_ptr(); // fill it with name bytes
 
 
-
     let c_const_pointer = 32 as *const i16;
     let c_mut_pointer = 64 as *mut i64;
     let c_const_pointer = c_mut_pointer.cast_const(); // casting the c raw mutable pointer into a constant one
@@ -403,6 +402,7 @@ pub async fn unsafer(){
     assert_eq!(thing1 as char, 'Y');
     let thing2: f32 = thing1 as f32 + 10.5;
     assert_eq!(true as u8 + thing2 as u8, 100);
+    let byte_ascii = b'a' as u32;
 
 
     ///// ------------------------------------------------------------------------------- /////

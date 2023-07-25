@@ -64,8 +64,15 @@ async fn test(){
                 }
             
             }
-            
-            let pinned = std::pin::Pin::new(&mut "wildonion".to_string());
+
+            /*
+                since &mut "wildonion".to_string() is being dropped once we used it to pin it 
+                we can't use it to get the bytes, we must create a type with longer lifetime
+                to avoid this 
+            */
+            let string = &mut "wildonion".to_string();
+            let pinned = std::pin::Pin::new(string);
+            let p_bytes = pinned.as_bytes();
 
         }
 
@@ -142,12 +149,17 @@ async fn test(){
 
 
     trait Message{}
-    trait Handler<M: Message + Send + Sync>{
-        fn handle(&mut self, msg: M){}
+    trait Handler<M: Message + Send + Sync + 'static>{
+        type Result;
+        fn handle(&mut self, msg: M) -> String;
     }
     struct Actor;
-    impl<M: Message + Send + Sync> Handler<M> for Actor{
-        fn handle(&mut self, msg: M) {}
+    impl<M: Message + Send + Sync + 'static> Handler<M> for Actor{
+        type Result = String;
+        fn handle(&mut self, msg: M) -> Self::Result{
+
+            "message".to_string()
+        }
     }
 
 
