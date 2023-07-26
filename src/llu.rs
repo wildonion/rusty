@@ -226,7 +226,7 @@ pub async fn unsafer(){
         //       +--------+--------+--------+
         //             |
         //             v
-        // Heap   +--------+--------+--------+--------+
+        // Heap  +--------+--------+--------+--------+
         //       |    'a' |    'n' | uninit | uninit |
         //       +--------+--------+--------+--------+
         let ptr_of_a = a.as_mut_ptr(); // *mut u8 - a pointer to the code ascii of the String

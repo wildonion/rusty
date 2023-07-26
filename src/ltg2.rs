@@ -8,8 +8,9 @@ use crate::*;
 async fn test(){
 
     const CONST: () = ();
-    let traits: &[&dyn Fn()];
-    let traits_: &[Box<dyn Fn()>];
+    let traits_slice: &[&dyn Fn()];
+    let traits_slices: &[&[Box<dyn Fn()>]];
+    let traits_slices_and_dyn: &[&[&dyn Fn()]];
     type CallbackHell = fn(Callback) -> u8;
     struct Callback;
     impl Interface for Callback{
@@ -167,6 +168,7 @@ async fn test(){
     where D: Send + Sync,
     F: FnOnce() -> String{
         pub data: F,
+        pub c: &'link dyn FnOnce() -> String, // Or Box<dyn FnOnce() -> String> | Box has its own lifetime
         pub link: &'link D
     }
     impl<D: Send + Sync, F: Send + Sync> Link<'_, D, F> 

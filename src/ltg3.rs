@@ -7,7 +7,7 @@ use crate::*;
 async fn test(){
 
     // =======--------------===============---------------============--------------
-    // =======-------------- FUTURE OBJECT DEMENSTRATION ---------------============
+    // =======-------------- FUTURE OBJECT DEMONSTRATION ---------------============
     // =======--------------===============---------------============--------------
     /* 
         when we use Default trait all the fields must be sized since rust needs to 
@@ -50,9 +50,14 @@ async fn test(){
             }
         }
     }
+    
     fn fut() -> String{
         "wildonion".to_string()
     }
+    fn another_fut() -> String{
+        "second wildonion".to_string()
+    }
+
     let (data_sender, data_receiver) = tokio::sync::oneshot::channel::<Func>();
     let mut future_object = Future::<Func>{
         data: Box::new(None),
@@ -62,9 +67,11 @@ async fn test(){
     data_sender.send(fut);
     future_object.poll();
     let data = {
+        /* returning the method without putting it into a type to create a longer lifetime for that */
         (*future_object.ready())
+            .as_mut() /* converting it into a mutable function */
             .unwrap()
-        }();
+    }();
     if data == "wildonion".to_string(){
         info!("solved future object");
     } else{
