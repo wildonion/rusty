@@ -6,6 +6,23 @@ use crate::*;
 
 async fn test(){
 
+    // ------------------- casting to trait -------------------
+    trait Interface{}
+    impl<T: FnOnce(String) -> ()> Interface for Response<T>{}
+    struct Response<T> where T: FnOnce(String) -> (){
+        pub method: T
+    };
+    let r = Response{
+        method: |name: String|{
+
+        }
+    };
+    let ra = &r;
+
+    let c = &r.method as *const dyn FnOnce(String);
+    let c = &r as *const dyn Interface;
+    // --------------------------------------------------------
+
     // =======--------------===============---------------============--------------
     // =======-------------- FUTURE OBJECT DEMONSTRATION ---------------============
     // =======--------------===============---------------============--------------
