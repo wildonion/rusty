@@ -33,7 +33,7 @@ fn test(){
     //// since rust doesn't have gc thus using value in other scopes we must notice that:
     ////     - value will be moved by default if it's a heap data and their previous lifetime will be dropped
     ////     - value will be copied by default if it's a stack data and we have them in other scopes
-    ////     - note that we can't borrow the value after it has moved
+    ////     - note that we can't borrow the value after it has moved or it can't be any pointer if the value is going to be moved 
     ////     - note that we can't move the value if it 
     ////            - is behind a shared pointer or borrowed since the pointer of that might convert into a dangling pointer once the value gets dropped
     ////            - doesn't implement the Copy trait
@@ -217,7 +217,7 @@ fn test(){
             // or
             // &Commander{} 
         }
-        pub fn ref_to_str<'a>() -> &'a str{ //// we can't return &str since we need a lifetime to do so
+        pub fn ref_to_str<'a>() -> &'a str{ //// we can't return &str since we need a lifetime to do so or the &str must be the field of the struct since self has longer lifetime than all the types inside the method 
             let name = "wildonion";
             name
         }
@@ -346,7 +346,10 @@ fn test(){
             &[u8] for Vec with a specific lifetime or a lifetime which lives long
             enough if the function gets executed like 'static lifetime, note that 
             we can't return them behind a valid reference at all since they're owned
-            by the function scope and no matter how they cant be used! 
+            by the function scope and no matter how they cant be used! a solution to
+            that is to define them as the struct field and return the pointer to the 
+            self.field_name since self has longer lifetime than all the local types
+            inside the method. 
         
         */
         // fn ret<'a>(name: String) -> &'a Vec<String>{
@@ -426,6 +429,9 @@ fn test(){
 
 	}
 
+
+    //-----------
+
     let mut arr = [1u8; 32];
     let mut slice = &mut arr;
     slice[0] = 3;
@@ -433,7 +439,166 @@ fn test(){
     // here arr is mutated too
     // ...
 
-    
+    //-----------
+
+    trait HasId{
+        type Id;
+        fn ret_id(&self) -> &Self::Id;
+    }
+
+    struct Node{
+        pub id: u32,
+        pub slice: [u32; 1]
+    }
+
+    /* 
+        can't return a pointer to heap data like String or Vec from method  
+        since heap data will be dropped from the ram once the method gets 
+        executed thus returning a pointer to them is useless and a dangling, 
+        unless we use their slice form like &str and &[] with either an static 
+        or a valid lifetime. 
+    */
+    impl Node{
+        fn get_id_str_(&self) -> &'static str{
+
+            // can't return pointer to String here
+            // &self.id.to_string();
+
+            /* 
+                we cannot obtain &'static str from a String because Strings may not live 
+                for the entire life of our program, and that's what &'static lifetime means. 
+                we can only get a slice parameterized by String own lifetime from it, we can 
+                obtain a static str but it involves leaking the memory of the String. this is 
+                not something we should do lightly, by leaking the memory of the String, this 
+                guarantees that the memory will never be freed (thus the leak), therefore, any 
+                references to the inner object can be interpreted as having the 'static lifetime.
+                
+                also here it's ok to return the reference from function since our reference lifetime 
+                is static and is valid for the entire life of the app
+            */
+            pub fn string_to_static_str(s: String) -> &'static str { 
+                /* 
+                    leaking the memory of the heap data String which allows us to have an 
+                    unfreed allocation that can be used to define static str using it since
+                    static means we have static lifetime during the whole lifetime of the app
+                    and reaching this using String is not possible because heap data types 
+                    will be dropped from the heap once their lifetime destroyed in a scope
+                    like by moving them into another scope hence they can't be live longer 
+                    than static lifetime
+
+                    Note: this will leak memory! the memory for the String will not be freed 
+                    for the remainder of the program. Use this sparingly
+                */
+                Box::leak(s.into_boxed_str()) 
+            }
+
+            let string: String = self.id.to_string();
+            let new_static_str = string_to_static_str(string);
+            new_static_str
+       
+       
+        }
+    }
+
+    /* 
+        can't return a pointer to a temp slice types from method  
+        since in Rust, local variables (like your arr variable) 
+        are stored on the stack and are deallocated at the end of 
+        the enclosing scope. This means that after get_id_() returns, 
+        the memory where arr was stored is reclaimed, and the 
+        reference to arr is no longer valid, when we try to return 
+        &[u32] from get_id_(), you are returning a reference to a 
+        temporary slice that no longer exists after the function call, 
+        which is why Rust prevents this with its ownership rules.
+
+
+        solution to this is:
+            - return a pointer to slice with a valid lifetime
+            - include a slice as part of Node or return a pointer 
+                to slice using &self which is a field of the struct 
+                since self has longer lifetime (use the lifetime of the &self)
+    */
+    impl Node{
+        fn get_id_(&self) -> &[u32]{
+            
+            /* 
+                can't retrun ref to a local var or a temp slice owned by the method
+                if we have a slice that's not 'static, it means the data it points to 
+                could be freed at some point, making it 'static requires ensuring that 
+                the data it points to lives for the entirety of the program.
+            */
+            // let arr = &[self.id];
+            // arr
+
+            &self.slice
+
+        }
+    }
+
+    impl Node{
+        fn get_id__(&self) -> &'static [u32]{
+            
+            /* 
+                we cannot obtain &'static str from a Vec because Vecs may not live 
+                for the entire life of our program, and that's what &'static lifetime means. 
+                we can only get a slice parameterized by Vec own lifetime from it, we can 
+                obtain a static str but it involves leaking the memory of the Vec. this is 
+                not something we should do lightly, by leaking the memory of the Vec, this 
+                guarantees that the memory will never be freed (thus the leak), therefore, any 
+                references to the inner object can be interpreted as having the 'static lifetime.
+                
+                also here it's ok to return the reference from function since our reference lifetime 
+                is static and is valid for the entire life of the app
+            */
+            pub fn vector_to_static_slice(s: Vec<u32>) -> &'static [u32] { 
+                /* 
+                    leaking the memory of the heap data Vec which allows us to have an 
+                    unfreed allocation that can be used to define static str using it since
+                    static means we have static lifetime during the whole lifetime of the app
+                    and reaching this using Vec is not possible because heap data types 
+                    will be dropped from the heap once their lifetime destroyed in a scope
+                    like by moving them into another scope hence they can't be live longer 
+                    than static lifetime
+
+                    Note: this will leak memory! the memory for the Vec will not be freed 
+                    for the remainder of the program. Use this sparingly
+                */
+                Box::leak(s.into_boxed_slice()) 
+            }
+
+            let vec = vec![self.id];
+            let new_static_slice = vector_to_static_slice(vec);
+            new_static_slice
+
+        }
+    }
+
+    /* 
+        the reason that get_id(&self) -> &u32 is allowed is because self.id 
+        is owned by self, which presumably exists for longer than the scope 
+        of the get_id() call. In this case, returning &u32 is safe because 
+        self will not be deallocated until after the caller of get_id() is 
+        done with the returned reference.
+    */
+    impl Node{
+        fn get_id(&self) -> &u32{
+            &self.id
+        }
+    }
+
+    impl HasId for Node{
+        type Id = u32;
+        fn ret_id(&self) -> &Self::Id {
+            &self.id
+        }
+    }
+
+    let mut node = Node{
+        id: 32,
+        slice: [32] /* no need to take a ref to [] since it's sized with 1 element */
+    };
+    let id = node.get_id();
+    node.id = 23;
 
 
 }
