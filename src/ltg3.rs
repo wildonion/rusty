@@ -6,6 +6,12 @@ use crate::*;
 
 async fn test(){
 
+    const SIZE: usize = 100;
+    struct TakeCare<const B: usize>();
+    let take_care = TakeCare::<SIZE>();
+    let arr_vec = [TakeCare::<SIZE>; 10].to_vec();
+
+
     // ------------------- casting to trait -------------------
     trait Interface{}
     impl<T: FnOnce(String) -> ()> Interface for Response<T>{}
@@ -31,12 +37,12 @@ async fn test(){
         know the types to fill them with default values 
     */
     #[derive(Debug)] 
-    struct Future<T: Clone>{
+    struct Future<'glifetime, T: Clone>{
         data: Box<Option<T>>,
         is_polled: bool,
-        data_receiver: tokio::sync::oneshot::Receiver<T>
+        data_receiver: tokio::sync::oneshot::Receiver<&'glifetime  T>
     }
-    impl<T: Clone> Future<T>{
+    impl<'glifetime, T: Clone> Future<'glifetime, T>{
 
         /*
             by mutating &mut type the actual type or the 
@@ -48,7 +54,7 @@ async fn test(){
                 if let Ok(data) = self.data_receiver.try_recv(){
                     /* setting the is_polled to true once we receive the data */
                     self.is_polled = true;
-                    self.data = Box::new(Some(data));
+                    self.data = Box::new(Some(data.clone()));
                     break;
                 }
             }
@@ -75,13 +81,13 @@ async fn test(){
         "second wildonion".to_string()
     }
 
-    let (data_sender, data_receiver) = tokio::sync::oneshot::channel::<Func>();
-    let mut future_object = Future::<Func>{
+    let (data_sender, data_receiver) = tokio::sync::oneshot::channel::<&&Func>();
+    let mut future_object = Future::<&Func>{
         data: Box::new(None),
         is_polled: false,
         data_receiver,
     };
-    data_sender.send(fut);
+    data_sender.send(&&(fut as Func));
     future_object.poll();
     let data = {
         /* returning the method without putting it into a type to create a longer lifetime for that */

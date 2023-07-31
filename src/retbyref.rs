@@ -441,6 +441,22 @@ fn test(){
 
     //-----------
 
+
+    /* 
+    
+        a type can't be mvoed if it's being used by other scopes 
+        or it's behind a shared pointer like &self thus we must either
+        clone it or borrow it 
+
+        a pointer to a type can't be returned from a method if the type
+        is owned by current function and is a local variable, solutions 
+        to this is using a valid lifetime for the pointer like 'static
+        or having the local type as the struct field to return the &self.field
+        which uses the self lifetime
+    
+    */
+
+
     trait HasId{
         type Id;
         fn ret_id(&self) -> &Self::Id;
