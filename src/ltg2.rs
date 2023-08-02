@@ -39,13 +39,14 @@ async fn test(){
 
             /* 
                 basically we have to put the slice types and dynamic types like traits behind pointer 
-                to have them as types in scopes cause they’re not sized like &[u8] and &dyn Trait or 
-                use Box for traits, for traits we can use them as the followings
-                    - return type of methods like -> impl Trait
-                    - method param type bounded to that trait like using some_param: impl Trait
+                like &[u8] and &dyn Trait or use Box for traits, to have them as types in scopes, cause 
+                they’re not sized and for traits we can use them as the followings
+                    - return type of methods like -> impl Trait or Future
+                    - return type of closure or function to to lifetimes and traits like -> R + Send + Sync + 'static
+                    - method param type bounded to that trait like using some_param: impl Trait or Future
                     - method param type like put them behind pointer
-                        - Box<dyn Fn()>, 
-                        - &dyn Fn()
+                        - Box<dyn Fn() or Future>, 
+                        - &dyn Fn() or Future
                     - in method and struct signatures like bounding generic to traits using where G: Trait
             */
 
@@ -135,7 +136,7 @@ async fn test(){
     d_boxed.as_mut()(); 
 
     // we can't have Pin<Box<impl Future<Output = i32>>> 
-    // the impl Timpl Trait will be added by compiler 
+    // the impl Trait will be added by compiler 
     // - return traits from method using -> impl TraitLikeClosure, Box<dyn Trait> or &'valid dyn Trait which implements trait for the return type
     // - use traits like closures in struct field using where or Box and method param using impl Trait
     // - pin async block into the ram so we can await on it in future 
@@ -396,7 +397,7 @@ async fn test(){
         since we're putting the return type of the Box which is
         another Box contains a future object inside the Pin thus 
         all the types inside the second Box must be live long anough
-        and be valid across .await until the value gets pinned from
+        and be valid across .await until the value gets unpinned from
         the ram. we can solve this by moving the that type into the 
         async block or the future object. 
     */

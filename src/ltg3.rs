@@ -1,18 +1,147 @@
 
 
 
+use tokio::task::JoinError;
 use crate::*;
 
 
+
 async fn test(){
+
+    /* ------------------------------------------------------------------- */
+    /* ------------------------ worker threadpool ------------------------ */
+    /* ------------------------------------------------------------------- */
+    /*
+        executing a closure inside tokio spawn green threadpool 
+        using generics and lifetimes, this can be used to handle 
+        an incoming socket connection from a socket server to 
+        solve an async task in the background
+    
+        basically we have to put the slice types and dynamic types like traits behind pointer 
+        like &[u8] and &dyn Trait or use Box for traits, to have them as types in scopes, cause 
+        they’re not sized and for traits we can use them as the followings
+            - return type of methods like -> impl Trait or Future
+            - return type of closure or function to to lifetimes and traits like -> R + Send + Sync + 'static
+            - method param type bounded to that trait like using some_param: impl Trait or Future
+            - method param type like put them behind pointer
+                - Box<dyn Fn() or Future>, 
+                - &dyn Fn() or Future
+            - in method and struct signatures like bounding generic to traits using where G: Trait
+        
+        note that when we want to use impl Trait syntax we have to make sure that 
+        the trait is already implemented for the type
+
+    */
+    type FutureType<'f> = &'f dyn std::future::Future<Output=Result<(), JoinError>>;
+    
+    /* 
+        having future object in method param and return type using: 
+            : impl Future for method param
+            -> impl Future for return type
+    */
+    async fn execute0<F: Send + Sync + 'static, R: Send + Sync + 'static>(f: F,
+            future: impl std::future::Future<Output=Result<(), String>>) -> 
+        impl std::future::Future<Output=Result<(), JoinError>> + Send + Sync + 'static
+        where F: FnOnce() -> R + Send + Sync + 'static,{ /* the return type must be send, sync and have static lifetime */
+
+        let join_handle = tokio::spawn(async move{
+            f();
+        }).await;
+        
+        async {
+            join_handle
+        }
+    }
+
+    /* 
+        having future object in method param and return type using: 
+            : &dyn Future for method param
+            -> impl Future for return type
+    */
+    async fn execute1<F: Send + Sync + 'static, R: Send + Sync + 'static>(f: F, 
+            future: &dyn std::future::Future<Output=Result<(), String>>) -> 
+        impl std::future::Future<Output=Result<(), JoinError>> + Send + Sync + 'static
+        where F: FnOnce() -> R + Send + Sync + 'static,{ /* the return type must be send, sync and have static lifetime */
+
+        let join_handle = tokio::spawn(async move{
+            f();
+        }).await;
+        
+        async {
+            join_handle
+        }
+    }
+
+    /* 
+        having future object in method param and return type using: 
+            : &dyn Future for method param
+            -> Box<Future> for return type
+        since we can't return &dyn Future from the method type we've wrapped a Box around
+        the future object cause future objects are traits and since traits are heap data types 
+        which are not sized at compile time, they need to be bounded to a valid lifetime if they 
+        want to be used as a type directly in method param and return type thus we can put them
+        behind a pointer like &dyn Future or inside a Box<dyn Future> also the dyn keyword means 
+        that we must have dynamic implementation of this trait for any type at runtime.
+    */
+    async fn execute2<F: Send + Sync + 'static, R: Send + Sync + 'static>(f: F, 
+            future: &dyn std::future::Future<Output=Result<(), String>>) -> 
+        Box<dyn std::future::Future<Output=Result<(), JoinError>> + Send + Sync + 'static>
+        where F: FnOnce() -> R + Send + Sync + 'static,{ /* the return type must be send, sync and have static lifetime */
+
+        let join_handle = tokio::spawn(async move{
+            f();
+        }).await;
+        
+        Box::new(async {
+            join_handle
+        })
+    }
+
+    /* 
+        having future object in method param and return type using: 
+            : &dyn Future for method param
+            -> Box<Future> for return type
+        using Pin which is a wrapper around a kind of pointer which makes that pointer pin 
+        its value in place, preventing the value referenced by that pointer from being moved 
+        unless it implements Unpin, Pin<P> is guaranteed to have the same memory layout and ABI as P.
+    */
+    async fn execute3<F: Send + Sync + 'static, R: Send + Sync + 'static>(f: F, 
+            future: impl std::future::Future<Output=Result<(), String>>) -> 
+        std::pin::Pin<Box<dyn std::future::Future<Output=Result<(), JoinError>> + Send + Sync + 'static>>
+        where F: FnOnce() -> R + Send + Sync + 'static,{ /* the return type must be send, sync and have static lifetime */
+
+        let join_handle = tokio::spawn(async move{
+            f();
+        }).await;
+        
+        /* 
+            &async{} can't be unpinned since async{} is of type 
+            Future<Output=<WHATEVERTYPE>> which is a trait and traits
+            are abstract dynamic size which can't be sized at compile time
+            and they need to be in form &dyn Trait or Box<dyn Trait> thus
+            async{} is a dynamic size type which must be behind a pointer 
+            with dyn keyword with a valid lifetime in order to be unpinned 
+            and this can only be coded and referenced syntatically using Box
+            which we can put the Box::new(async{}) inside the Pin or use Box::Pin
+            which returns a pinned Box. 
+        */
+        Box::pin(async {
+            join_handle
+        })
+    }
+    /* ------------------------------------------------------------------- */
+    /* ------------------------------------------------------------------- */
+    /* ------------------------------------------------------------------- */
 
     const SIZE: usize = 100;
     struct TakeCare<const B: usize>();
     let take_care = TakeCare::<SIZE>();
     let arr_vec = [TakeCare::<SIZE>; 10].to_vec();
+    
 
-
+    // --------------------------------------------------------
     // ------------------- casting to trait -------------------
+    // --------------------------------------------------------
     trait Interface{}
     impl<T: FnOnce(String) -> ()> Interface for Response<T>{}
     struct Response<T> where T: FnOnce(String) -> (){
@@ -27,7 +156,19 @@ async fn test(){
 
     let c = &r.method as *const dyn FnOnce(String);
     let c = &r as *const dyn Interface;
+
+    let data: Arc<tokio::sync::Mutex<std::pin::Pin<Box<dyn Interface>>>> = 
+        Arc::new(
+            tokio::sync::Mutex::new(
+                Box::pin(
+                    r /* since Interface trait is implemented for the r is the instance of the Response struct */
+                )
+            )
+        );
     // --------------------------------------------------------
+    // --------------------------------------------------------
+    // --------------------------------------------------------
+
 
     // =======--------------===============---------------============--------------
     // =======-------------- FUTURE OBJECT DEMONSTRATION ---------------============
@@ -169,30 +310,31 @@ async fn test(){
 	// https://rust-lang.github.io/async-book/07_workarounds/04_recursion.html
 	// NOTE - Future trait is an object safe trait thus we have to Box it with dyn keyword to have kinda a pointer to the heap where the object is allocated in runtime
 	// NOTE - a recursive `async fn` will always return a Future object which must be rewritten to return a boxed `dyn Future` to prevent infinite size allocation in runtime from heppaneing some kinda maximum recursion depth exceeded prevention process
-	//// the return type can also be ... -> impl std::future::Future<Output=usize>
-	//// which implements the future trait for the usize output also BoxFuture<'static, usize>
-	//// is a pinned Box under the hood because in order to return a future as a type
-	//// we have to return its pinned pointer since future objects are traits and 
-	//// traits are not sized at compile time thus we have to put them inside the 
-	//// Box or use &dyn to return them as a type and for the future traits we have
-	//// to pin them into the ram in order to be able to solve them later so we must 
-	//// return the pinned Box (Box in here is a smart pointer points to the future)
-	//// or use impl Trait in function return signature. 
-	//
-	//// async block needs to be pinned into the ram and since they are traits of 
-	//// the Future their pointer will be either Box<dyn Trait> or &dyn Trait, 
-	//// to pin them into the ram to solve them later.
-	//
-	//// since async blocks are of type Future trait in roder to return them
-	//// as a type their pointer either Box<dyn Trait> or &dyn Trait must be
-	//// pinned into the ram to let us solve them later because rust doesn't 
-	//// have gc and it'll drop the type after it moved into the new scope or
-	//// another type thus for the future objects we must pin them to ram and 
-	//// tell rust hey we're moving this in other scopes but don't drop it because
-	//// we pinned it to the ram to solve it in other scopes, also it must have
-	//// valid lifetime during the the entire lifetime of the app.
-	//
-	//// BoxFuture<'fut, ()> is Pin<alloc::boxed::Box<dyn Future<Output=()> + Send + Sync + 'fut>>
+	/* 
+        the return type can also be ... -> impl std::future::Future<Output=usize>
+        which implements the future trait for the usize output also BoxFuture<'static, usize>
+        is a pinned Box under the hood because in order to return a future as a type
+        we have to return its pinned pointer since future objects are traits and 
+        traits are not sized at compile time thus we have to put them inside the 
+        Box or use &dyn to return them as a type and for the future traits we have
+        to pin them into the ram in order to be able to solve them later so we must 
+        return the pinned Box (Box in here is a smart pointer points to the future)
+        or use impl Trait in function return signature. 
+        
+        async block needs to be pinned into the ram and since they are traits of 
+        the Future their pointer will be either Box<dyn Trait> or &dyn Trait, 
+        to pin them into the ram to solve them later.
+        
+        since async blocks are of type Future trait in roder to return them
+        as a type their pointer either Box<dyn Trait> or &dyn Trait must be
+        pinned into the ram to let us solve them later because rust doesn't 
+        have gc and it'll drop the type after it moved into the new scope or
+        another type thus for the future objects we must pin them to ram and 
+        tell rust hey we're moving this in other scopes but don't drop it because
+        we pinned it to the ram to solve it in other scopes, also it must have
+        valid lifetime during the the entire lifetime of the app.
+    */
+	// BoxFuture<'fut, ()> is Pin<alloc::boxed::Box<dyn Future<Output=()> + Send + Sync + 'fut>>
 	pub const CHARSET: &[u8] = b"0123456789";
     pub fn async_gen_random_idx(idx: usize) -> futures_util::future::BoxFuture<'static, usize>{ // NOTE - pub type BoxFuture<'a, T> = Pin<alloc::boxed::Box<dyn Future<Output = T> + Send + 'a>>
 	    async move{
@@ -295,32 +437,22 @@ async fn test(){
         pub method: fn() -> T,
         pub t_type: T, // T must refer to a field, or be a `PhantomData` otherwise must be removed
     }
-    
-    //// since the return type have a reference
-    //// thus we have to use a valid lifetime 
-    //// for that because we can't return a 
-    //// reference from function which is owned
-    //// by that function thus we've used the 
-    //// 'static lifetime.
-    //
-    //// returning traits as type requires to 
-    //// put them inside the box or use &dyn 
-    //// with a valid lifetime but we can use
-    //// them as generic in struct fields and 
-    //// function params directly using where
-    //// clause or inside the function or struct 
-    //// signature; if we want to return the trait
-    //// we must to return an instance of its 
-    //// implementor since they are abstract 
-    //// dynamic sized types and don't have 
-    //// size at compile time and we can't just
-    //// simply return a trait inside function 
-    //// because everything in rust must be sized.
-    //
-    //// if we want to return the trait behind 
-    //// a pointer like &dyn we must use a valid
-    //// lifetime before &dyn alos bound that
-    //// trait to that lifetime too.
+    /* 
+        since the return type have a reference thus we have to use a valid lifetime 
+        for that because we can't return a reference from function which is owned
+        by that function thus we've used the 'static lifetime.
+        
+        returning traits as type requires to put them inside the box or use &dyn with 
+        a valid lifetime but we can use them as generic in struct fields and function 
+        params directly using where clause or inside the function or struct signature; 
+        if we want to return the trait we must to return an instance of its implementor 
+        since they are abstract dynamic sized types and don't have size at compile time 
+        and we can't just simply return a trait inside function because everything in rust 
+        must be sized.
+        
+        if we want to return the trait behind a pointer like &dyn we must use a valid lifetime 
+        before &dyn alos bound that trait to that lifetime too.
+    */
     struct Test10{}
     impl InterfaceMe for Test10{} 
     fn test_10() -> &'static (dyn InterfaceMe + 'static){ //// here we're returning the trait behind a pointer or &dyn with a 'static lifetime thus the trait itself must be bounded to the 'static lifetime too
@@ -368,30 +500,34 @@ async fn test(){
         where C: FnOnce(String) -> String + Send + Sync + 'static + 'lifetime //// the whole `FnOnce(String) -> String` is the trait defenition returns String type which we're bounding it to other traits and lifetimes
     { 
         (
-            //// we can't have the following async{Box::new(c)}
-            //// inside the Pin since Pin accept a pointer of the 
-            //// passed in type and we can't simply borrow the async{}
-            //// block to put it inside the Pin also we can't have &async{}
-            //// thus we should put the async{} block inside the Box 
-            //// since Box is a smart pointer that has a valid lifetime
-            //// on its own. 
-            //
-            //// &async{} can't be unpinned since async{} is of type 
-            //// Future<Output=<WHATEVERTYPE>> which is a trait and traits
-            //// are abstract dynamic size which can't be sized at compile time
-            //// and they need to be in form &dyn Trait or Box<dyn Trait> thus
-            //// async{} is a dynamic size type which must be behind a pointer 
-            //// with dyn keyword with a valid lifetime in order to be unpinned 
-            //// and this can only be coded and referenced syntatically using Box
-            //// which we can put the Box::new(async{}) inside the Pin or use Box::Pin
-            //// which returns a pinned Box. 
+            /* 
+                we can't have the following async{Box::new(c)}
+                inside the Pin since Pin accept a pointer of the 
+                passed in type and we can't simply borrow the async{}
+                block to put it inside the Pin also we can't have &async{}
+                thus we should put the async{} block inside the Box 
+                since Box is a smart pointer that has a valid lifetime
+                on its own. 
+                
+                &async{} can't be unpinned since async{} is of type 
+                Future<Output=<WHATEVERTYPE>> which is a trait and traits
+                are abstract dynamic size which can't be sized at compile time
+                and they need to be in form &dyn Trait or Box<dyn Trait> thus
+                async{} is a dynamic size type which must be behind a pointer 
+                with dyn keyword with a valid lifetime in order to be unpinned 
+                and this can only be coded and referenced syntatically using Box
+                which we can put the Box::new(async{}) inside the Pin or use Box::Pin
+                which returns a pinned Box. 
+            */
             // std::pin::Pin::new(&async{Box::new(c)}); // this can not be unppined
             Box::pin(
                 async{ // async blocks are future objects
-                    //// we have to put the passed in param in here 
-                    //// since the type inside the Box must be the 
-                    //// generic C itself not the something like closure, 
-                    //// |name: String| name explicity!
+                    /* 
+                        we have to put the passed in param in here 
+                        since the type inside the Box must be the 
+                        generic C itself not the something like closure, 
+                        |name: String| name explicity!
+                    */
                     Box::new(c) 
                 }
             ),
