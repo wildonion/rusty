@@ -21,7 +21,7 @@ async fn test(){
         like &[u8] and &dyn Trait or use Box for traits, to have them as types in scopes, cause 
         they’re not sized and for traits we can use them as the followings
             - return type of methods like -> impl Trait or Future
-            - return type of closure or function to to lifetimes and traits like -> R + Send + Sync + 'static
+            - return type of closure to lifetimes and traits like: FnOnce() -> R + Send + Sync + 'static
             - method param type bounded to that trait like using some_param: impl Trait or Future
             - method param type like put them behind pointer
                 - Box<dyn Fn() or Future>, 
