@@ -72,6 +72,16 @@ async fn test(){
         }
     }
 
+    struct Cmd;
+    struct ExecuteCommand<'cmd, C: FnMut() -> () + Send + Sync, E, F>
+        where E: FnOnce(C) -> F + Send + Sync + 'static,
+        F: std::future::Future<Output=Result<Cmd, Box<dyn std::error::Error>>>
+        {
+            pub command: &'cmd mut Cmd,
+            pub process: E,
+            pub closure: C,
+        }
+
     /* 
         having future object in method param and return type using: 
             : &dyn Future for method param
