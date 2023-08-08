@@ -73,13 +73,15 @@ async fn test(){
     }
 
     struct Cmd;
-    struct ExecuteCommand<'cmd, C: FnMut() -> () + Send + Sync, E, F>
+    type ProcessorId<'p> = String;
+    struct ExecuteCommand<'cmd, C: FnMut() -> () + Send + Sync, E, F,>
         where E: FnOnce(C) -> F + Send + Sync + 'static,
         F: std::future::Future<Output=Result<Cmd, Box<dyn std::error::Error>>>
         {
             pub command: &'cmd mut Cmd,
             pub process: E,
             pub closure: C,
+            pub process_id: ProcessorId<'cmd>
         }
 
     /* 
