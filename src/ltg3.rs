@@ -44,12 +44,16 @@ async fn test(){
         impl std::future::Future<Output=Result<(), JoinError>> + Send + Sync + 'static
         where F: FnOnce() -> R + Send + Sync + 'static,{ /* the return type must be send, sync and have static lifetime */
 
-        let join_handle = tokio::spawn(async move{
+        let joinhandle_result = tokio::spawn(async move{
             f();
         }).await;
+
+        // if let Err(why) = joinhandle_result{
+        //     error!("can't join the thread because {why:}");
+        // };
         
         async {
-            join_handle
+            joinhandle_result
         }
     }
 
@@ -63,12 +67,16 @@ async fn test(){
         impl std::future::Future<Output=Result<(), JoinError>> + Send + Sync + 'static
         where F: FnOnce() -> R + Send + Sync + 'static,{ /* the return type must be send, sync and have static lifetime */
 
-        let join_handle = tokio::spawn(async move{
+        let joinhandle_result = tokio::spawn(async move{
             f();
         }).await;
+
+        // if let Err(why) = joinhandle_result{
+        //     error!("can't join the thread because {why:}");
+        // };
         
         async {
-            join_handle
+            joinhandle_result
         }
     }
 
@@ -100,12 +108,16 @@ async fn test(){
         Box<dyn std::future::Future<Output=Result<(), JoinError>> + Send + Sync + 'static>
         where F: FnOnce() -> R + Send + Sync + 'static,{ /* the return type must be send, sync and have static lifetime */
 
-        let join_handle = tokio::spawn(async move{
+        let joinhandle_result = tokio::spawn(async move{
             f();
         }).await;
+
+        // if let Err(why) = joinhandle_result{
+        //     error!("can't join the thread because {why:}");
+        // };
         
         Box::new(async {
-            join_handle
+            joinhandle_result
         })
     }
 
@@ -122,9 +134,13 @@ async fn test(){
         std::pin::Pin<Box<dyn std::future::Future<Output=Result<(), JoinError>> + Send + Sync + 'static>>
         where F: FnOnce() -> R + Send + Sync + 'static,{ /* the return type must be send, sync and have static lifetime */
 
-        let join_handle = tokio::spawn(async move{
+        let joinhandle_result = tokio::spawn(async move{
             f();
         }).await;
+
+        // if let Err(why) = joinhandle_result{
+        //     error!("can't join the thread because {why:}");
+        // };
         
         /* 
             &async{} can't be unpinned since async{} is of type 
@@ -138,7 +154,7 @@ async fn test(){
             which returns a pinned Box. 
         */
         Box::pin(async {
-            join_handle
+            joinhandle_result
         })
     }
     /* ------------------------------------------------------------------- */
