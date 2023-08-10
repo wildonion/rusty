@@ -7,6 +7,16 @@ use crate::*;
 
 async fn test(){
 
+    /* an inline returning from a closure example */
+    let cls = |name: &str| match name{
+        "wildonion" => {
+            1
+        },
+        _ => {
+            2
+        }
+    };
+
     const CONST: () = ();
     let traits_slice: &[&dyn Fn()];
     let traits_slices: &[&[Box<dyn Fn()>]];

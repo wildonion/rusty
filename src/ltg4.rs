@@ -8,9 +8,45 @@ use crate::*;
 
 async fn test(){
 
+    /* ------------------------------------------------------------------ */
+    /* ---------------------- ACTOR IMPLEMENTATION ----------------------
+        a handler needs to be implemented for each message type 
+        since a message may return a type which can be caught as
+        the return type of the send() method once it gets called 
+    */
+    /* ------------------------------------------------------------------ */
+    /* ------------------------------------------------------------------ */
+    struct SomeServerActor<M: Send + Sync + 'static>{
+        sender: tokio::sync::mpsc::Sender<M>,
+        mailbox: tokio::sync::mpsc::Receiver<M>,
+    }
+
+    impl<M: Send + Sync + 'static> SomeServerActor<M>{
+
+        pub async fn send(&mut self, m: M) -> () {
+            self.sender.send(m).await;
+            
+        }
+
+        async fn receive(&mut self){
+            
+            let m = self.mailbox.recv().await;
+
+        }
+
+        async fn execute(&mut self, f: fn() -> ()){
+
+            tokio::spawn(async move{
+                f()
+            });
+        }
+
+    }
+    /* ------------------------------------------------------------------ */
+    /* ------------------------------------------------------------------ */
+
     trait InterfaceMe{}
     impl InterfaceMe for () {}
-
 
     pub struct Req;
     pub struct Res;
