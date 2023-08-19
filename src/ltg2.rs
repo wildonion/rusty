@@ -7,6 +7,18 @@ use crate::*;
 
 async fn test(){
 
+    type Nothing = ();
+    struct Geni<'bl, B, F1: Fn() -> (), 
+                F2: FnMut() -> &'bl B + Send + Sync + 'static, 
+                F3 = fn() -> Nothing>
+        where B: Send + Sync + 'static{
+
+        f1: F1,
+        f2: F2,
+        f3: F3
+
+    }
+
     /* an inline returning from a closure example */
     let cls = |name: &str| match name{
         "wildonion" => {
@@ -16,6 +28,24 @@ async fn test(){
             2
         }
     };
+
+    /* inline creating and calling */
+    (
+        |name: &str| match name{
+            "wildonion" => {
+                1
+            },
+            _ => {
+                2
+            }
+        }
+    )("wildonion");
+
+    let boxed_cls = Box::new(cls);
+    let unboxed_cls = *boxed_cls; /* we can unbox it using * since box is an smart pointer */
+    let called_unboxed_cls = unboxed_cls("wildonion");
+    let called_unboxed_cls = (*boxed_cls)("wildonion");
+
 
     const CONST: () = ();
     let traits_slice: &[&dyn Fn()];
@@ -60,16 +90,25 @@ async fn test(){
                     - in method and struct signatures like bounding generic to traits using where G: Trait
             */
 
-            fn implement_<G>(mut g: impl Interface) where G: 'static{
-                g.check(); /* check method is mutable thus g must be mutable */
+            fn implement_<G, R>(mut g: impl Interface) 
+                where G: 'static + Send + Sync + FnMut() -> R + Send + Sync + 'static,
+                      R: Send + Sync + 'static{ /* the type of g is an structure or a type that implements the Interface */
+                    g.check(); /* check method is mutable thus g must be mutable */
             } 
 
-            fn run_fut<G: Into<Callback>>(fut: impl std::future::Future<Output = fn() -> String>, generic: G) 
+            fn run_fut<G: Into<Callback>>(gen: impl Into<Callback> + AsRef<Callback>, 
+                fut: impl std::future::Future<Output = fn() -> String>, generic: G) 
                 -> impl std::future::Future<Output = String>
                 where G: std::future::Future<Output = String>{
                 
                 let into_g = generic.into();
                 into_g.run();
+
+                /* since gen param is bounded to Into trait we can call into() method on it */
+                // let gen_into = gen.into();
+
+                /* since gen param is bounded to AsRef trait we can call the as_ref() method to get the reference to Callback instance */
+                let gen_as_ref = gen.as_ref();
 
                 async {
                     "wildonion".to_string()

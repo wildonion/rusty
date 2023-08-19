@@ -173,6 +173,13 @@ fn test(){
             Pack{}
 	    }
 
+        /*  -------------------------- pointers notes ---------------------------------------------
+            can't return pointer to a type from methods if the type is owned by the function body, 
+            we can return static lifetime or a pointer to the self.field also can't move data into 
+            new scopes if its behind a pointer but we can return a pointer to none allocated stack 
+            space data like -> &Struct{} since it didn't allocate nothing on the stack which also 
+            is not owned by the method obviously
+        -----------------------------------------------------------------------------------------*/
         // we can return a pointer to struct 
         // by returning &Struct{} from the method
         // since by doing this we're allocating 
