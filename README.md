@@ -2,4 +2,4 @@
 
 ## Rust Playgrounds
 
-* lifetime, traits, generics: `cargo run --bin rusty`
+* lifetime, traits, generics, pointers: `cargo run --bin rusty`

@@ -7,17 +7,68 @@ use crate::*;
 
 async fn test(){
 
+    // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- Generic Fns =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     type Nothing = ();
-    struct Geni<'bl, B, F1: Fn() -> (), 
+    struct Information<'bl, B, F1: Fn() -> (), 
                 F2: FnMut() -> &'bl B + Send + Sync + 'static, 
-                F3 = fn() -> Nothing>
+                T, F3 = fn() -> Nothing> // here T can be &[u8]
         where B: Send + Sync + 'static{
 
         f1: F1,
         f2: F2,
-        f3: F3
+        f3: F3,
+        lost_bits: T,
+        entropy: &'bl B
 
     }
+
+    /* -------------------------------------------------------------------------------------- 
+
+        Closure Case: In the closure example, the closure captures the environment in 
+            which it's defined. This includes the value 34, which is actually stored 
+            within the closure itself. As a result, the reference &34 is valid for 
+            the lifetime of the closure.
+
+        Function Case: In the function example, there's no environment to capture.
+            The value 45 is a temporary value created within the function and destroyed 
+            when the function returns. Consequently, you can't safely return a reference to it.
+        
+        When we try to return a reference to a temporary value, we'll usually encounter a 
+        compilation error stating that you're trying to return a reference to a local variable, 
+        which is deallocated after the function returns. In summary, closures can capture 
+        and own their environment, so they can safely return references to it. Functions can't 
+        do that, so returning a reference to a temporary value is not safe.
+
+        in other words returning reference from the closure is safe cause they'll capture the
+        type into their own scope which allows us to borrow them thus return a pointer to them
+        but for the functions, since there is no capturing process during the execution thus
+        everything will be created inside the function body and is limited to that scope, so 
+        we can't return a reference (without valid lifetime like static or the lifetime of self)
+        to the type cause there is no value for it to be borrowed from because local types inside
+        the function will be dropped once the function gets executed on the stack.
+    
+     -------------------------------------------------------------------------------------- */
+    let cls = ||{
+        &34
+    };
+
+    // fn ret_i32() -> &i32{
+    //     &45
+    // }
+
+    fn amethod(){}
+    let instance = Information::<'_, i32, _, _, &[u8], _>{
+        f1: ||{},
+        f2: cls,
+        f3: amethod,
+        lost_bits: &[1],
+        entropy: &32
+    };
+    let new_instance = Information::<'_, i32, _, _, &[u8], _>{
+        ..instance // filling the rest with the old ones
+    };
+    // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
 
     /* an inline returning from a closure example */
     let cls = |name: &str| match name{

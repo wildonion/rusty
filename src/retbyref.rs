@@ -176,7 +176,7 @@ fn test(){
         /*  -------------------------- pointers notes ---------------------------------------------
             can't return pointer to a type from methods if the type is owned by the function body, 
             we can return static lifetime or a pointer to the self.field also can't move data into 
-            new scopes if its behind a pointer but we can return a pointer to none allocated stack 
+            new scopes if its behind a pointer also we can return a pointer to none allocated stack 
             space data like -> &Struct{} since it didn't allocate nothing on the stack which also 
             is not owned by the method obviously
         -----------------------------------------------------------------------------------------*/
@@ -599,14 +599,16 @@ fn test(){
     /* 
         the reason that get_id(&self) -> &u32 is allowed is because self.id 
         is owned by self, which presumably exists for longer than the scope 
-        of the get_id() call. In this case, returning &u32 is safe because 
-        self will not be deallocated until after the caller of get_id() is 
-        done with the returned reference.
+        of the get_id() call, since self can be accessible out of the method too
+        or where the instance has initialized, in this case, returning &u32 
+        is safe because self will not be deallocated unless the caller of get_id()
+        or the instance of the Node struct gets done with the returned reference
     */
     impl Node{
         fn get_id(&self) -> &u32{
             &self.id
         }
+
     }
 
     impl HasId for Node{

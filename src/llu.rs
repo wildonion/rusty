@@ -828,6 +828,13 @@ pub async fn unsafer(){
         in stack or stack by its pointer and with mutable pointer we can 
         mutate the data of the type
 
+        a pointer points to the location address of the data which is inside the heap 
+        or stack but we must put the heap data that their size will be specified at 
+        runtime behind a pointer so we can access them by their ram location also the 
+        pointer, cap and length will be stored on the stack and if the pointer is a 
+        mutable once it gets mutated the underlying data in other scopes will 
+        be mutated too
+
         we need to know that how many pointers are borrowing the types at runtime 
         which can be used to count the references, once its strong counter reached 0 the type
         can be dropped from the ram, just to wake you up, rust doesn't have gc :) during the 
