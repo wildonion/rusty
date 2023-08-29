@@ -122,7 +122,7 @@ async fn test(){
 
         ||{
             let name = "";
-            let boxed_name: &'static mut str = Box::leak(name.into());
+            let boxed_name: &'static mut str = Box::leak(name.into()); /* converting the &str to &'static str by leaking the memory of the String */
             boxed_name
         }
 
