@@ -116,6 +116,22 @@ async fn test(){
         pub info: T
     }
 
+    /* path param can be any type bounded to the following traits */
+    fn run<T: Send + ?Sized>(path: impl Send + Sync + 'static + Sized) 
+        -> impl FnOnce() -> &'static str + Send{
+
+        ||{
+            let name = "";
+            let boxed_name: &'static mut str = Box::leak(name.into());
+            boxed_name
+        }
+
+    }
+    /* the run() method param can be any type which is bounded to Send + Sync + 'static + Sized */
+    run::<str>("src"); /* since ?Sized is implemeneted for the generic thus we can use str unless we have to use &str */
+    /* run() method has a parameter of type Calleback */
+    run::<Callback>(Callback{});
+
     impl<'a, G: Fn() -> Callback, T> Wannet<'a, G, T>{ 
         /* 
             a mutable pointer to self lets us to have the instance later on 

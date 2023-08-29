@@ -16,8 +16,6 @@ async fn test(){
         public_addr: String::from("")
     };
 
-
-
     pub async fn race_condition_avoidance(){
 
         /* ---------------------------------------------------------------------- */
