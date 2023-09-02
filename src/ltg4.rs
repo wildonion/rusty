@@ -8,6 +8,21 @@ use crate::*;
 
 async fn test(){
 
+
+    /* multi types support method */
+    fn move_me<T>(param: T) -> () where T: AsRef<[u8]>{
+        // T is bounded to AsRef thus we can call the as_ref() method
+        // also AsRef can be used for String, vector which convert them
+        // into slices
+        let a = param.as_ref(); 
+    }
+    let name = "wildonion".to_string();
+    let vec = vec![1];
+    move_me(name.clone());
+    move_me(&name);
+    move_me(&[12]);
+    move_me(vec);
+
     type KKeys = String;
     struct Keccak<KKeys>{
         public_addr: KKeys,
