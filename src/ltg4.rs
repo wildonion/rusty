@@ -8,6 +8,23 @@ use crate::*;
 
 async fn test(){
 
+    pub struct Connection;
+    #[async_trait::async_trait]
+    pub trait RuntimeExecutor<'lifetime, G>{
+        async fn invoke(&mut self, connection: &'lifetime mut Connection) -> Connection{
+            Connection{}
+        }
+    }
+    pub async fn cpi_transfer<'lifetime, E>(connection: &'lifetime mut Connection, mut runtime: E) 
+        where E: RuntimeExecutor<'lifetime, Connection> + Send + Sync{
+
+            /* future are traits that must be behind pointers like Box<dyn> or &dyn */
+            type PinnedBoxPointerToFuture<'lifetime> = std::pin::Pin<Box<dyn std::future::Future<Output=Connection> + Send + 'lifetime>>;
+            /* e must be mutable since run() method accepts a mutable pointer */
+            let r: PinnedBoxPointerToFuture = runtime
+                .invoke(connection);
+            r.await;
+        }
 
     /* multi types support method */
     fn move_me<T>(param: T) -> () where T: AsRef<[u8]>{
