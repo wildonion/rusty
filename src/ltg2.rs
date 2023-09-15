@@ -27,7 +27,7 @@ async fn test(){
             type into the ram by constructing a new Pin<Box<Type>>. then Type will be 
             pinned in memory and unable to be moved.
         */
-        data: &mut Box::pin(func())
+        data: &mut Box::pin(func()) // passing the result of calling async func to the pinned box
     };
     let unpinned_boxed = instance.data.await;
     /*  
@@ -39,7 +39,7 @@ async fn test(){
         implemented for &mut Type which is the type of data field
     */
     // let deref_boxed = *instance.data;
-    instance.data = &mut Box::pin(func());
+    instance.data = &mut Box::pin(func()); // passing the result of calling async func to the pinned box
 
     // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- Generic Fns =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     type Nothing = ();
