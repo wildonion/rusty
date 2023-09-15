@@ -7,6 +7,40 @@ use crate::*;
 
 async fn test(){
 
+    async fn func(){}
+    type Type = Box<dyn std::future::Future<Output=()> + Send + Sync + 'static>;
+    struct Generic<'lifetmie, Type>{
+        pub data: &'lifetmie mut Type // mutating mutable pointer mutates the underlying data too
+    }
+    let mut instance = Generic{
+        /*  
+            to have future objects as a type which are of type Future trait we have to
+            put them behind a pointer and pin the pointer into the ram to get their result
+            in later scopes by awaiting on them which actually will unpin their pointer,
+            we can't use Box::new(async move{()}) if we want to access the result of the 
+            future outside of the Boxed scope to solve this we must pin the boxed value 
+            which in this case is pinning the pointer to the Future trait, and put an await
+            on that in later scopes to unpin the boxed value from the ram to get the result
+            of the future object
+
+            since Future trait doesn't implement Unpin trait thus we can pin the boxed 
+            type into the ram by constructing a new Pin<Box<Type>>. then Type will be 
+            pinned in memory and unable to be moved.
+        */
+        data: &mut Box::pin(func())
+    };
+    let unpinned_boxed = instance.data.await;
+    /*  
+        moving type can also be dereferencing the type which converts
+        the pointer into the owned value but based on the fact that 
+        if the type is behind a pointer we can't move it! so we can't
+        deref the pinned boxed in here, we must clone it or borrow it 
+        which clone is not working in here because Clone it's not 
+        implemented for &mut Type which is the type of data field
+    */
+    // let deref_boxed = *instance.data;
+    instance.data = &mut Box::pin(func());
+
     // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- Generic Fns =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     type Nothing = ();
     struct Information<'bl, B, F1: Fn() -> (), 
