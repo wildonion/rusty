@@ -8,6 +8,54 @@ use crate::*;
 
 async fn test(){
 
+    /* ------------------------------------------------------- */
+    /* ------------------------------------------------------- */
+    let (ref name, age) = ("wildonion", 23);
+    trait Interface{
+        fn call(&self){}
+    }
+    struct Struct;
+    impl Interface for Struct{
+        fn call(&self){}
+    }
+    impl Interface for (){
+        fn call(&self){}
+    }
+    let _ = match (name, age){
+        (&"onion", 12) | (&"dewo", 45) => {
+            let res = {
+                
+                async fn run<'v, 'a, V>(param: impl Interface) -> &'a &'v str 
+                    where V: Send + Sync + 'static + Interface{
+                    
+                    let ref name = "";
+                    name
+                    
+                }
+                /* 
+                    when the return type is a trait means that 
+                    the trait must be implemented for the return
+                    type which in our case is ()
+                */
+                async fn execute(param: Struct) -> impl Interface{
+                    param.call()
+                }
+                execute(Struct{})
+            }.await;
+            res
+        },
+        _ => {
+
+            (
+                || async {}
+            )().await;
+
+            todo!()
+        }
+    };
+    /* ------------------------------------------------------- */
+    /* ------------------------------------------------------- */
+
     pub struct Connection;
     #[async_trait::async_trait]
     pub trait RuntimeExecutor<'lifetime, G>{
