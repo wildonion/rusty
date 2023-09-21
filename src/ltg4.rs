@@ -28,6 +28,16 @@ async fn test(){
                 async fn run<'v, 'a, V>(param: impl Interface) -> &'a &'v str 
                     where V: Send + Sync + 'static + Interface{
                     
+                    let async_res = async{
+
+                        struct Execute<'lifetime, G>(pub &'lifetime [G]) where G: AsRef<[u8]>;
+                        impl<'a, G: AsRef<[u8]>> Execute<'a, G>{
+                            fn run(g: G) -> G{
+                                g
+                            }
+                        }
+                    };
+
                     let ref name = "";
                     name
                     
