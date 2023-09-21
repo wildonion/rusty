@@ -30,9 +30,16 @@ async fn test(){
                     
                     let async_res = async{
 
+                        /* 
+                            unwrap() takes ownership so use as_ref() or clone() before calling it 
+                            also if the type is behind a shared pointer we can't move it since pointer will
+                            be a dangling one thus we have to borrow it or clone it and move the clone 
+                            or borrow version of it between scopes
+                        */
                         struct Execute<'lifetime, G>(pub &'lifetime [G]) where G: AsRef<[u8]>;
                         impl<'a, G: AsRef<[u8]>> Execute<'a, G>{
                             fn run(g: G) -> G{
+                                let as_ref_g = g.as_ref(); /* this works since g is of type G which is bounded to AsRef trait */
                                 g
                             }
                         }
