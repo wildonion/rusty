@@ -235,7 +235,11 @@ fn test(){
 
         
         /*
+            dangling pointer is a pointer which is pointing to no where which might be 
+            happened due to moving type into other scopes when it's behind a pointer and 
+            because of this rust won't let us to do so.
             
+            in the first palce we should borrow it some how using as_ref(), clone() or &
             we can return a reference from a method to a type that allocates
             nothing on the stack like returning Pack{} directly without storing 
             it inside a variable but we can't return a pointer to a type that is 
