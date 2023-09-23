@@ -43,6 +43,16 @@ async fn test(){
     let t = (queues[0].task)();
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++   
+    trait Transport{}
+    trait Message{}
+    struct UserAccount<'a, T, M> where T: Transport, M: Message{
+        pub data: std::rc::Rc<std::cell::RefCell<&'a [u8]>>,
+        pub transport: T,
+        pub memo: M,
+    }
+    impl<'a, T: Transport, M: Message> UserAccount<'a, T, M>{
+
+    }
     struct Nft;
     struct Account<'info, GenericData>{
     pub account: GenericData,
