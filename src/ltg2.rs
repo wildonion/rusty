@@ -7,6 +7,7 @@ use crate::*;
 
 async fn test(){
 
+    // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- pinned box =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     async fn func(){}
     type Type = Box<dyn std::future::Future<Output=()> + Send + Sync + 'static>;
     struct Generic<'lifetmie, Type>{

@@ -8,6 +8,55 @@ use crate::*;
 
 async fn test(){
 
+    fn init_vm(){
+
+        let datarefcell: Rc<RefCell<&'static [u8; 64]>> = Rc::new(RefCell::new(&[0u8; 64]));
+        let lam = **datarefcell.borrow_mut(); //// double dereference to get the [0u8l 64] which has 64 bytes data 
+    
+        #[derive(Debug, Clone)]
+        enum Chip{
+            Intel{version: String},
+            M1
+        }
+        let cmd = Chip::Intel{version:"wildonion".to_string()};
+        let Chip::Intel{version: esm} = cmd else{
+            panic!("no");
+        };
+    
+        struct Runtime;
+        trait RuntimeExt{}
+        struct ByteCode<'b>{
+            pub bytes: &'b [u8]
+        };
+        struct VirtualMachine<'Exectuor, 'b, Runtime: Send + Sync + 'static, const SIZE: usize>
+            where Runtime: RuntimeExt,
+            ByteCode<'b>: Send + Sync + 'static{
+           pub rt: &'Exectuor Runtime,
+           pub bytecodes: &'b [ByteCode<'b>; SIZE]
+        }
+        
+        #[derive(Debug, Clone)]
+        struct Executor;
+        #[derive(Debug, Clone)]
+        enum Cost{
+            Runtime{executor: Executor},
+            Vm,
+        }
+        let cost = Cost::Runtime { executor: Executor };
+        match cost{
+            Cost::Runtime { executor: executor_instance } => {
+                let ext = executor_instance;
+                todo!()
+            },
+            Cost::Vm =>{
+                todo!()
+            }
+            _ => {
+                todo!()
+            }
+        }
+    }
+
     /* ------------------------------------------------------- */
     /* ------------------------------------------------------- */
     let (ref name, age) = ("wildonion", 23);
