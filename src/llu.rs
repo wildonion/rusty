@@ -575,8 +575,8 @@ pub async fn unsafer(){
     */
     //// we can borrow in order to prevent from moving but 
     ////        - can't later move the type into new scope since it has a borrow, we can clone it or move its borrow 
-    ////        - can't mutate the borrowed if it's not a mutable borrow 
-    ////        - only one mutable borrow can be exist in a scope
+    ////        - can't mutate the borrowed if it's not a mutable borrow and the underlying type is not mutable
+    ////        - only one mutable borrow can be exist in a scope (if we have this we can't have immutable pointer)
     ////        - mutating the borrow needs the underlying data to be mutable too 
     //// in general we can't move a type into other scopes if 
     //// there is a pointer of it since by doing this the pointer

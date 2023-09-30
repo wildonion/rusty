@@ -234,7 +234,29 @@ fn test(){
         }  
 
         
-        /*
+        /*  
+        
+            in a scope:
+                if there is a mutable pointer of a type we can't have more than one of it
+                also we can't have any immutable pointer to the type cause there is already
+                a mutable pointer exists and if there is an immutable pointer of a type we 
+                can have more than one but we can't have any mutable pointer to the type cause
+                only one mutable pointer can be exists in the whole scope.
+
+            lifetime of a heap data will be dropped once it gets moved into a new scope
+            cause rust doesn't support gc, now if the type is behind a pointer or shared 
+            reference rust won't let us move the type or get its owned version of it in 
+            the first place, rust doing is this is because we can't have dangling pointer 
+            which is a pointer is pointing to no where! solution to this is either cloning 
+            the type or move the borrow of it, also is good to know that we can't pass a 
+            mutable borrow if there is already an immutable borrow of type cause we can 
+            only have one mutable reference of the type but multiple immutable ones in each 
+            scope but not both at the same time means that:
+                1 - if there's an immutable reference to a value, you can't create a mutable 
+                    reference to the same value while the immutable reference is still in scope.
+                2 - if there's a mutable reference to a value, you can't create an immutable 
+                    reference to the same value while the mutable reference is still in scope.
+            
             dangling pointer is a pointer which is pointing to no where which might be 
             happened due to moving type into other scopes when it's behind a pointer and 
             because of this rust won't let us to do so.
@@ -289,7 +311,7 @@ fn test(){
 
         // ---------------- THUS             
         // - can't move out of a type if it's behind a pointer but we can pass by ref
-        // - can't return pointer to a heap data which is owned by the function we can use Box instead but we're okey to return slice with a valid lifetime
+        // - can't return pointer to a heap data which is owned by the function we can use Box instead but we're okey to return them or their slice with a valid lifetime
         // ----------------
         //// can't move the type if it's behind a pointer and doesn't implement copy trait (heap data) 
         //// since we can borrow mutably and return ref to stack types from function but not heap data 

@@ -31,11 +31,11 @@
         underlying data doesn't implement the Copy trait which we must clone it to prevent from moving) to pass to other scopes otherwise we CAN'T dereference 
         or move it at all because Clone is a supertrait of the Copy trait; also we MUST know this that inside a scope multiple immutable references of a type 
         or instance can be there but only one mutable reference must be used for that instance for example inside a method struct we can have multiple immutable 
-        reference of the self but only one mutable reference of the self can be used, this rule allows rust to have safe concurreny and thread safe channels 
-        like mpsc in which we can move a shareable data like Arc<Mutex<T>>: Send + Sync + 'static (the type must be cloneable, lockable and bounded to Send, 
-        Sync traits and have 'static lifetime to be valid across threads) between threads that can be read by multiple producer or multiple threads (immutable 
-        references) at the same time but only a single consumer or a single thread (mutable reference) can use that data also the receiver side of the channel 
-        is not shareable since Clone trait is not implemented for that but the sender side can be cloned and shared between threads.
+        reference of the self but only one mutable reference of the self can be used (not both at the same time), this rule allows rust to have safe concurreny
+        and thread safe channels like mpsc in which we can move a shareable data like Arc<Mutex<T>>: Send + Sync + 'static (the type must be cloneable, lockable 
+        and bounded to Send, Sync traits and have 'static lifetime to be valid across threads) between threads that can be read by multiple producer or multiple 
+        threads (immutable references) at the same time but only a single consumer or a single thread (mutable reference) can use that data also the receiver 
+        side of the channel is not shareable since Clone trait is not implemented for that but the sender side can be cloned and shared between threads.
 
 */
 
