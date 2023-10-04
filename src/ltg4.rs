@@ -77,6 +77,8 @@ async fn test(){
                 async fn run<'v, 'a, V>(param: impl Interface) -> &'a &'v str 
                     where V: Send + Sync + 'static + Interface{
                     
+                    trait Interface{}
+                    struct U8<'u>(pub &'u [u8]);
                     let async_res = async{
 
                         /* 
@@ -90,6 +92,24 @@ async fn test(){
                             fn run(g: G) -> G{
                                 let as_ref_g = g.as_ref(); /* this works since g is of type G which is bounded to AsRef trait */
                                 g
+                            }
+                            /* -------------------- */
+                            /* new as_ref() example */
+                            /* -------------------- */
+                            fn program<'u, P>(p: P, s: impl Interface) 
+                                -> Result<(), ()> where P: AsRef<&'u Option<U8<'u>>>{
+
+                                /* 
+                                    can't move out of a shared reference since p.as_ref()
+                                    is a shared reference which can't be moved because 
+                                    unwrap() takes the ownership of the self thus we have
+                                    to call another as_ref() on the first as_ref() to borrow
+                                    the ownership of the first as_ref() and then unwrap 
+                                    it to take the first element of the unit like struct which 
+                                    is &[u8]
+                                */
+                                let p_ref = p.as_ref().as_ref().unwrap().0;
+                                Ok(())
                             }
                         }
                     };

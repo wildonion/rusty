@@ -203,6 +203,26 @@ async fn test(){
                     g.check(); /* check method is mutable thus g must be mutable */
             } 
 
+            /* -------------------- */
+            /* new as_ref() example */
+            /* -------------------- */
+            struct U8<'u>(pub &'u [u8]);
+            fn program<'u, P>(p: P, s: impl Interface) 
+                -> Result<(), ()> where P: AsRef<&'u Option<U8<'u>>>{
+
+                /* 
+                    can't move out of a shared reference since p.as_ref()
+                    is a shared reference which can't be moved because 
+                    unwrap() takes the ownership of the self thus we have
+                    to call another as_ref() on the first as_ref() to borrow
+                    the ownership of the first as_ref() and then unwrap 
+                    it to take the first element of the unit like struct which 
+                    is &[u8]
+                */
+                let p_ref = p.as_ref().as_ref().unwrap().0;
+                Ok(())
+            }
+
             fn run_fut<G: Into<Callback>>(gen: impl Into<Callback> + AsRef<Callback>, 
                 fut: impl std::future::Future<Output = fn() -> String>, generic: G) 
                 -> impl std::future::Future<Output = String>
