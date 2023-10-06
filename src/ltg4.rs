@@ -87,8 +87,8 @@ async fn test(){
                             be a dangling one thus we have to borrow it or clone it and move the clone 
                             or borrow version of it between scopes
                         */
-                        struct Execute<'lifetime, G>(pub &'lifetime [G]) where G: AsRef<[u8]>;
-                        impl<'a, G: AsRef<[u8]>> Execute<'a, G>{
+                        struct Execute<'lifetime, G>(pub &'lifetime [G]) where G: AsRef<[G]>;
+                        impl<'a, G: AsRef<[G]>> Execute<'a, G>{
                             fn run(g: G) -> G{
                                 let as_ref_g = g.as_ref(); /* this works since g is of type G which is bounded to AsRef trait */
                                 g
