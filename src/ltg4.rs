@@ -8,6 +8,22 @@ use crate::*;
 
 async fn test(){
 
+    /* -------------------------------------------------------------------------- */
+    /* ------------------ vector of boxed FnMut closure traits as jobs ------------------ */
+    /* -------------------------------------------------------------------------- */
+    /* can't bound G to Send Sync cause Rc is not thread safe */
+    struct Task<'u, G: 'static>{
+        pub data: &'u [G]
+    };
+    struct Cmd1<D: Send + Sync + 'static>(pub D);
+    struct Cmd;
+    type Job<T> = Box<dyn FnMut(fn(usize) -> T) -> ()>;
+    let jobs: Vec<Job<Task<'_, Rc<Task<'_, Cmd>>>>> = vec![];
+    let jobs1: Vec<Job<Task<'_, Cmd1<String>>>> = vec![];
+    /* -------------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------------- */
+
     fn init_vm(){
 
         let datarefcell: Rc<RefCell<&'static [u8; 64]>> = Rc::new(RefCell::new(&[0u8; 64]));
@@ -97,8 +113,9 @@ async fn test(){
                             /* new as_ref() example */
                             /* -------------------- */
                             fn program<'u, P>(p: P, s: impl Interface) 
-                                -> Result<(), ()> where P: AsRef<&'u Option<U8<'u>>>{
+                                -> Result<(), ()> where P: AsRef<Option<&'u U8<'u>>>{
 
+                                    // as_ref() returns a pointer to the underlying data
                                 /* 
                                     can't move out of a shared reference since p.as_ref()
                                     is a shared reference which can't be moved because 
@@ -111,6 +128,7 @@ async fn test(){
                                 let p_ref = p.as_ref().as_ref().unwrap().0;
                                 Ok(())
                             }
+
                         }
                     };
 
