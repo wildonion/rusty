@@ -9,25 +9,159 @@ use crate::*;
 
 fn test(){
 
-    // --------------------------------------------------------------------
-    // ----------------------- ret ref to struct ex -----------------------
-    // --------------------------------------------------------------------
-    // return a valid ref to struct itself from method is ok cause it 
-    // allocates nothing on the stack thus we can ret &'elifetime Exe
-    struct Exe{pub id: i32}
-    fn execute<'elifetime>() -> &'elifetime Exe{
-        &Exe {id: 8}
-    }
-    // but if the struct contains a heap data field we can't do that
+    // ------------------------------------------------------
+    // ----------------------- LTG EX -----------------------
+    // ------------------------------------------------------
+    // NOTE1 - can't return pointer from method to heap data since they're owned by method
+    // NOTE2 - we can return a pointer to empty struct or an struct that contains stack data types
+    // NOTE3 - we can return a pointer to closure traits if they're allocating nothgin in stack in method body (in-place returning pointer) 
+    // NOTE4 - we can return a pointer with valid lifetime to heap data slice forms
+    // NOTE5 - at runtime all heap data will be coerced to slice form
+    
+    // but if the struct contains a heap data fields like String and Vec 
+    // we can't do that since these heap data will take allocation space 
+    // inside the method body and we can't return ref to heap data at all 
+    // cause they'll be owned by the function.
     // struct Exe1{pub name: String, pub vec: Vec<String>}
     // fn execute1<'elifetime>() -> &'elifetime Exe1{
     //     &Exe1 {name: "wildonion".to_string(), vec: vec!["now".to_string()]}
     // }
+    // this is not ok cause all the strings are allocated
+    // inside the function body which are owned by the 
+    // function and returning a ref to them is not allowed
+    // by rust because of dangling pointer issues, thus 
+    // returning pointer to heap data is not ok at all
+    // fn execute4<'elifetime>() -> &'elifetime String{
+    //     &"&move ||{}".to_string()
+    //     &String::from("")
+    // }
+    // ----------------
+    // return a valid ref to struct itself from method is ok cause it 
+    // allocates nothing on the stack thus we can ret &'elifetime Exe
+    // or if the struct contains stack data we can also return ref to
+    // that yet.
+    struct Exe{pub id: i32}
+    fn execute<'elifetime>() -> &'elifetime Exe{
+        &Exe {id: 8}
+    }
+    // ----------------
     // of course we're ok to return the slice of String or Vec or their coerced types
     // note that everything is in their coerced type of slice type
     struct Exe2<'elifetime>{pub name: &'elifetime str, pub arr: &'elifetime [&'elifetime str]}
     fn execute2<'elifetime>() -> &'elifetime Exe2<'elifetime>{
         &Exe2::<'elifetime>{name: "wildonion", arr: &["now"]}
+    }
+    // ----------------
+    // this is ok since we're allocating nothing on the stack
+    // and we're returning the closure in-place although the 
+    // closures are traits and they're heap data
+    fn execute3<'elifetime>() -> Box<&'elifetime dyn FnMut() -> ()>{
+        Box::new(&move ||{})
+        // if try to allocate it inside a var then we can't 
+        // return a ref to it and the following faces us 
+        // a compile time error since the type will be owned
+        // by the function and once the method gets executed
+        // the type will dropped from the ram and returning a 
+        // pointer to that results to have a dangling pointer
+        // which rust doesn't allow us to do this in the first place
+        // let callback = move || {};
+        // &callback
+    }
+    // ----------------
+    // returning a slice of String or Vec is ok since it's a stack data
+    // type, note that we have to use a valid lifetime and array 
+    // can't contain heap data types
+    fn execute4<'elifetime>() -> (&'elifetime str, &'elifetime [&'elifetime str]){
+    
+        // ("", &[""])
+
+        // or 
+
+        let name = "";
+        let arr = &["name"];
+        // we can't have the following cause it's temp 
+        // value which is owned by the method
+        // let arr = &[name];
+        (name, arr)
+
+    }
+    // ----------------
+    struct Ctor{
+        pub name: String,
+        pub arr: Vec<String>
+    }
+    impl Ctor{
+        pub fn set(&mut self, new_arr: Vec<String>, new_name: String) -> (&Vec<String>, &String){
+            
+            self.arr = new_arr;
+            self.name = new_name;
+            
+            // it's ok to return this cause we're returning a pointer 
+            // to the struct fields itself and since the &self is valid 
+            // as long as the object is valid and doesn't gets dropped
+            // thus returning a pointer to them is ok
+            (&self.arr, &self.name)
+            
+            // it's not ok to return the following because it's owned 
+            // by the method and we can't return pointer to heap data 
+            // since once the method gets executed their lifetime will
+            // be dropped and no longer will be accessible  
+            // (&new_arr, &new_name)
+        }
+    }
+
+    trait Respond{}
+    struct Response{}
+    struct Request<T: Clone + ?Sized, V = fn() -> ()>{
+        pub data: T,
+        pub func: V
+    }
+    impl Respond for Response{}
+    fn execute5<'elifetime, T: Clone, V, C, R: Send + Sync + 'static + Respond, G: Send + Sync + 'static>
+        (res: C, param: impl Respond, anything: G) 
+        // the return type must implement the Respond trait
+        -> (impl Respond, Box<&'elifetime dyn FnOnce(C) -> ()>,
+            std::pin::Pin<Box<dyn std::future::Future<Output=G>>>)
+        where C: FnMut(Request<T, V>, Response) -> R,
+        R: Clone + Send + Send + 'static{
+        
+        let res_ = Response{};
+        
+        let cls = &move |res: C|{
+            let new_res_obj = res;
+        };
+        
+        // calling the callback and pass the res to it as its param cause res is of type C
+        // which is a generic bounded to C FnMut trait
+        cls(res); 
+
+        // it's ok to return the param itself since it's bounded to Respond trait 
+        // and we now that it's imeplemented the Respond trait
+        (
+            param, // or res_ // it's also ok to return the res object since Response struct implements the Respond trait
+            Box::new(
+                
+                // it's not ok to put cls in here since it's 
+                // owned by the function and can't return a ref
+                // to that we have to use an in-place returning 
+                // pointer which allocates nothing in the stack 
+                // inside the method body
+                // &cls --------------- ERROR
+                &move |res|{
+                    ()
+                }
+            ),
+            // this is not ok since async move{anything} is allocated 
+            // inside the method body and thus returning a pointer to 
+            // that is not ok since it's a heap data
+            // Box::pin(&async move{anything})
+
+            // G must be bounded to 'static since we're pinning a future object
+            // into ram to gets solved later thus any type that is being used 
+            // inside of it must live long enough
+            Box::pin(async move{anything})
+        )
+        
     }
     // --------------------------------------------------------------------
     // --------------------------------------------------------------------
