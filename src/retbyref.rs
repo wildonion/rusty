@@ -112,12 +112,14 @@ fn test(){
 
     trait Respond{}
     struct Response{}
-    struct Request<T: Clone + ?Sized, V = fn() -> ()>{
+    struct Request<'elifetime, T: Clone + ?Sized, V = fn() -> ()>{
         pub data: T,
-        pub func: V
+        pub func: V,
+        pub boxed_traits_closures: Box<&'elifetime dyn FnMut() -> ()>
     }
     impl Respond for Response{}
-    fn execute5<'elifetime, T: Clone, V, C, R: Send + Sync + 'static + Respond, G: Send + Sync + 'static>
+    fn execute5<'elifetime, T: Clone, V, C, R: Send + Sync + 'static + Respond, 
+        G: Send + Sync + 'static + AsRef<[C]>>
         (res: C, param: impl Respond, anything: G) 
         // the return type must implement the Respond trait
         -> (impl Respond, Box<&'elifetime dyn FnOnce(C) -> ()>,
@@ -126,6 +128,8 @@ fn test(){
         R: Clone + Send + Send + 'static{
         
         let res_ = Response{};
+        
+        let ag = anything.as_ref();
         
         let cls = &move |res: C|{
             let new_res_obj = res;
