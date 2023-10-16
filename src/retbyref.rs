@@ -110,6 +110,13 @@ fn test(){
         }
     }
 
+    /*
+        every type in rust has lifetime and will be dropped once you move them in other 
+        scopes without taking a reference to them or at the end of the scope like metho 
+        body and tha't the reason we can't ret a pointer to heap data from the method body
+        although slice types of Vec and String heap data are ok to be returned as pointer 
+        also in place returning and matching allocates nothing on the stack
+    */
     trait Respond{}
     struct Response{}
     struct Request<'elifetime, T: Clone + ?Sized, V = fn() -> ()>{
