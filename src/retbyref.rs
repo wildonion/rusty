@@ -9,6 +9,11 @@ use crate::*;
 
 fn test(){
 
+    // no gloabl mutable data we can have mutex data which is thread safe
+    pub const DELIM: &[u8; 32] = &[0x01; 32];
+    pub static DELIM0: Lazy<std::sync::Arc<tokio::sync::RwLock<HashMap<String, String>>>> 
+        = Lazy::new(|| { std::sync::Arc::new(tokio::sync::RwLock::new(HashMap::new())) });
+
     // ------------------------------------------------------
     // ----------------------- LTG EX -----------------------
     // ------------------------------------------------------
@@ -85,6 +90,126 @@ fn test(){
         (name, arr)
 
     }
+    // ----------------
+    struct Type{}
+    impl Interface for Type{}
+    /* 
+
+        we can't return a pointer to heap data while the data is owned by the method 
+        means that if the has been initialized in method body or is a param that has 
+        been passed to the method it can't be returned as a pointer, because an space
+        inside the ram has been allocated for that type which has a valid lifetime as
+        long as the method isn't executed yet and  once the method gets executed the 
+        lifetime of the data will be dropped out of the ram and the pointer will be a 
+        dangling pointer which rust doesn't allow us to do this in the first place, we 
+        could return a pointer to the type of course, only if we're returning the
+        initialization of the type in that moment which will allocate nothing on the 
+        stack, also we can return the slice form of heap data specially &[] and &str
+        for Vec and String respectively but we have to make sure that we're using 
+        a valid lifetime for them and they don't contain heap data specially for
+        &[] or a data that is owned by the method body, generally we can return pointer
+        to heap data if and only if the data has a valid lifetime and:
+            - is an slice form of the heap data itself like &'validlifetime [] or &str which: 
+                - doesn't contain a heap data as well they must contain stack data like &str
+                - doesn't contain a data which is owned by the method (it must be in-place allocation like &[&Type{}])
+            - is a field of an instance of a struct (since &self is valid as long as the instance is valid)
+                - which can be returned as a pointer using self lifetime
+                - which can't be a data which is owned by the struct method
+            - is a &str allocated in a var
+                - returning &str from method is ok since they're by default are behind pointer
+                - putting &str in a var and return the var allocates nothing in the method body 
+                - it's ok to return them in-place or a var contains &str
+    
+    */
+    fn e1<'tlifetime>(param: &'tlifetime Type) -> &'tlifetime dyn Interface
+        where Type: Interface{
+        &Type{} // in-place allocation which allocates nothing on the stack 
+        // &param // Error: can't return data owned by the method since by passing param to method it's lifetime is now owned by the method body
+    }
+    fn e2<'tlifetime>(param: Type) -> impl Interface
+        where Type: Interface{        
+        param
+    }
+    /* 
+        why passing heap data into method as trait
+        because once the heap data move inside the method its lifetime will be 
+        owned by the method and will be dropped once the method gets executed 
+        also it's better to use trait for types since there might be other 
+        types from other crates that is going to be used as rng param and 
+        all they have to do is implement Secure trait so we can call trait 
+        methods on them
+    */
+    fn e3<'tlifetime>(param: &'tlifetime dyn Interface) -> &'tlifetime [&'tlifetime dyn Interface]
+        where Type: Interface{      
+        /* this is ok to be returned since the array contains no heap data */
+        let params = &[];
+        params
+
+        /* this is not ok cause the array contains trait which is a heap data type */
+        // let params = &[param];
+        // params
+        // or this:
+        // &[param]
+    }
+    // fn e4<'tlifetime>(param: &'tlifetime dyn Interface) -> &'tlifetime [&'tlifetime String]
+    //     where Type: Interface{      
+
+    //         // this is not ok since we're returning a pointer to heap data
+    //         &[&String::from("")]
+
+    // }
+    fn e5<'tlifetime>(param: impl Interface) -> &'tlifetime [&'tlifetime str]
+        where Type: Interface{      
+
+            // this is not ok since we're returning a pointer to heap data
+            &[""]
+
+            // this is not ok cause we're allocating an space in method body
+            // by putting the &str inside the array 
+            // which the data will be owned by the method thus can't return
+            // a pointer to that
+            // let na = "";
+            // &[na]
+
+    }
+    // fn e6<'tlifetime>(param: impl Interface) -> &'tlifetime String
+    //     where Type: Interface{      
+    //         // this is not ok since creating string using String::from()
+    //         // or "".to_string() will alway allocate space on the stack 
+    //         // thus in both ways can't be acted as an in-place allocation
+    //         // thus can't be returned as a pointer
+    //         &String::from("")
+
+    // }
+    fn e7<'tlifetime>(param: impl Interface) -> &'tlifetime str
+        where Type: Interface{      
+
+            // this is ok since str by default are behind pointer 
+            // and actually we're allocating nothing in here 
+            // thus returning them with a var is ok
+            let name = "";
+            name 
+
+    }
+    fn e8<'tlifetime>(param: impl Interface) -> &'tlifetime str
+        where Type: Interface{      
+
+            // this is ok since str by default are behind pointer 
+            // and actually we're allocating nothing in here 
+            // thus returning them with a var is ok
+            ""
+             
+
+    }
+    // fn e8<'tlifetime>(param: impl Interface) -> &'tlifetime u8
+    //     where Type: Interface{      
+
+    //         let num = 1;
+
+    //         // this is not ok since num is owned by the method
+    //         &num 
+
+    // }
     // ----------------
     struct Ctor{
         pub name: String,
@@ -515,7 +640,7 @@ fn test(){
         }
 
         pub fn ref_to_trait__(&self) -> &dyn Interface{
-            self //// can't return self in here 
+            self
         }
 
 	    // NOTE - first param can also be &mut self; a mutable reference to the instance and its fields
