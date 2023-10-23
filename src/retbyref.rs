@@ -198,9 +198,49 @@ fn test(){
             // and actually we're allocating nothing in here 
             // thus returning them with a var is ok
             ""
-             
+    }
+    // impl Trait is only allowed in method param and return type
+    struct UserData<'v, D: Clone + ?Sized + Fn() -> ()>
+    {
+        data: D,
+        role: &'v str,
+        boxed_pin: std::pin::Pin<Box<&'v dyn futures_util::Future<Output=String>>>,
+    }
+    fn e9<'tlifetime, C: Fn() -> () + Clone>(param: &'tlifetime dyn Interface, cls: C) 
+        -> &'tlifetime UserData<'tlifetime, C>
+            where Type: Interface{      
+
+            /* 
+                both of the ways are wrong since we can't 
+                return pointer to a data which is owned by 
+                the function, we have heap data in structure
+                allocated space on the ram 
+            */
+            // let d = UserData::<'tlifetime, C>{
+            //     data: cls,
+            //     role: "user",
+            //     boxed_pin: {
+            //         Box::pin(&async move{
+            //             String::from("")
+            //         })
+            //     }
+            // };
+            // &d
+
+            // &UserData::<'tlifetime, C>{
+            //     data: cls,
+            //     role: "user",
+            //     boxed_pin: {
+            //         Box::pin(&async move{
+            //             String::from("")
+            //         })
+            //     }
+            // }
+
+        todo!()
 
     }
+    
     // fn e8<'tlifetime>(param: impl Interface) -> &'tlifetime u8
     //     where Type: Interface{      
 
