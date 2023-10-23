@@ -210,6 +210,12 @@ fn test(){
         -> &'tlifetime UserData<'tlifetime, C>
             where Type: Interface{      
 
+            // returning pointer to heap data is allowed only if the data is 
+            // a field of an instance cause self is valid as long as the instance
+            // is valid, once we move the self into for example a tokio::spawn() which rust
+            // won't allow in the first place, we'll lose the ownership of the self and thus 
+            // all the fields
+
             /* 
                 both of the ways are wrong since we can't 
                 return pointer to a data which is owned by 
