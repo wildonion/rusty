@@ -119,6 +119,13 @@ fn test(){
                 - returning &str from method is ok since they're by default are behind pointer
                 - putting &str in a var and return the var allocates nothing in the method body 
                 - it's ok to return them in-place or a var contains &str
+
+        ret ref to heap data from method (structure field and their slice form with vaid lifetime)
+        use trait like Box<dyn Trait> or &'t dyn Trait or Box<&'t Trait> in:
+            - bounding generic to closure trait like => (param: T) where T: FnMut() -> ()
+            - impl Trait for type like => impl Trait for Type{}
+            - method param like => param: impl Trait
+            - structure fields => param: Box<&'t dyn FnMut() -> ()>
     
     */
     fn e1<'tlifetime>(param: &'tlifetime Type) -> &'tlifetime dyn Interface
@@ -473,6 +480,31 @@ fn test(){
                     age: u32,
                 },
             }
+
+            // ------------------------
+            //   matching over struct
+            // ------------------------
+            #[derive(Clone, Debug, Default)]
+            struct OrmModel{
+                name: String,
+                other_mail: String,
+                code: i32,
+            }
+            let orm_model = OrmModel{
+                name: "wildonion".to_string(),
+                other_mail: "ea_pain@yahoo.com".to_string(),
+                code: 2435
+            };
+            let _ = match orm_model{
+                OrmModel{name, other_mail: themail, code} if code > 2000 => {
+                    // returning terminates the method execution and respond the 
+                    // caller with the value where it gets called
+                    0 
+                },
+                _ => {
+                    1
+                }
+            };
 
 
             let ine = Chie::Avali(12); //// the Dovomi variant is never constructed cause we've used the first variant  
