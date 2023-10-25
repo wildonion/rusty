@@ -120,6 +120,10 @@ fn test(){
                 - putting &str in a var and return the var allocates nothing in the method body 
                 - it's ok to return them in-place or a var contains &str
 
+        an slice of String and Vec are &str and &[] which are pointers to a part of String or Vec 
+        in either binary, stack or heap data (will be specified at compile time) or an slice is 
+        a pointer to the underlying of the data which is stored in either binary, heap or stack
+        
         ret ref to heap data from method (structure field and their slice form with vaid lifetime)
         use trait like Box<dyn Trait> or &'t dyn Trait or Box<&'t Trait> in:
             - bounding generic to closure trait like => (param: T) where T: FnMut() -> ()
