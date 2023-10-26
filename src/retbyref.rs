@@ -623,7 +623,7 @@ fn test(){
         }  
 
         
-        /*  
+        /*  ----------------------- pointers notes -----------------------
         
             in a scope:
                 if there is a mutable pointer of a type we can't have more than one of it
