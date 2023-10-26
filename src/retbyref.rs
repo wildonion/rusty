@@ -130,6 +130,19 @@ fn test(){
             - impl Trait for type like => impl Trait for Type{}
             - method param like => param: impl Trait
             - structure fields => param: Box<&'t dyn FnMut() -> ()>
+
+        conclusions:    
+            since evrything in rust has lifetime (due to lack of gc) and will be dropped out of the ram 
+            once the type gets moved into other scopes thus there is no need to return pointer to types 
+            from method specially heap data types cause returning a pointer to them is not possible since 
+            they're owned by the method body and once the method gets executed their lifetime will be dropped
+            from the ram this this rules is applied to return pointer to structures which contain heap data
+            fields, solution to this can be returning their slice form like &'valid mut str and 
+            &'valid mut [NoneHeapDataType] or although it's possible to return a pointer to String or Vec
+            only if we're returning them from a structure method and they're the structure fileds cause 
+            lifetime of &self is valid as long as the instance is valid thus returning pointer to String 
+            or Vec which are fields of structure which are not owned by the method body is ok cause their 
+            lifetime is valid until the instance gets dropped from the ram.
     
     */
     fn e1<'tlifetime>(param: &'tlifetime Type) -> &'tlifetime dyn Interface
