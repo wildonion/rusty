@@ -373,6 +373,47 @@ pub async fn unsafer(){
         }
     }
 
+    // --------------------------------------------------
+    //                 mutable pointer ex
+    // - can't have more than one mutable pointer in
+    // a same scope also
+    // 
+    // - we can mutate the actual type using its mutable
+    // pointer in another scope
+    // --------------------------------------------------
+    struct Thing;
+    impl Thing {
+        // fn maybe_next(&mut self) -> Option<&mut Self> { None }
+        fn maybe_next(&self) -> Option<&mut Self> { None }
+    }
+    // first mutable pointer is defined here
+    let mut temp = &mut Thing;
+    // a new location maybe allocated for the pointer in each iteration
+    loop {
+        // can't call maybe_next on temp since
+        // maybe_next() borrow the instance mutably
+        // and we can't have two mutable pointers 
+        // at the same time
+        match temp.maybe_next() {
+            Some(v) => { temp = v; }
+            None => { }
+        }
+    }
+
+    fn mutate_me(esm: &mut String){
+        
+        *esm = String::from("wildonion");
+    }
+
+    let mut name = String::from("");
+    let pointer = &mut name;
+    
+    // println!("before mutating pointer {}", name);
+    
+    mutate_me(pointer);
+    println!("after mutating pointer {}", name);
+    // --------------------------------------------------
+
     ///// -------------- casting using raw pointer and transmute -------------- /////
 
     fn foo() -> i32{
