@@ -17,7 +17,31 @@ fn test(){
     // ------------------------------------------------------
     // ----------------------- LTG EX -----------------------
     // ------------------------------------------------------
-    // NOTE1 - can't return pointer from method to heap data since they're owned by method
+    /* 
+        returning a pointer to a data which is owned by the method body
+        regardless of it's type, either stack slice or heap data types 
+        is not possible since the data has allocated space on the ram 
+        inside the method body and due to future dangling pointer issue 
+        rust won't allow us to do this in the first place, we can solve 
+        this solution by complying the following notes:
+    */
+    fn from_string<'valid>(data: [u8; 32]) -> &'valid [u8]{
+
+        // let bytes = "wildonion".as_bytes();
+        // bytes
+
+        // data has been moved to this method which is owned by the current function
+        // means that it's allocated something in the ram inside the method body 
+        // and thus can't return a pointer to that
+        // data.as_slice()
+
+        // or 
+
+        "wildonion".as_bytes()
+
+        
+    }
+    // NOTE1 - can't return pointer from method to stack and specially heap data since they're owned by method and they've allocated space on the ram inside the method body
     // NOTE2 - we can return a pointer to empty struct or an struct that contains stack data types
     // NOTE3 - we can return a pointer to closure traits if they're allocating nothgin in stack in method body (in-place returning pointer) 
     // NOTE4 - we can return a pointer with valid lifetime to heap data slice forms
