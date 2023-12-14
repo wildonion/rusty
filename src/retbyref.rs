@@ -659,7 +659,7 @@ fn test(){
             lifetime of a heap data will be dropped once it gets moved into a new scope
             cause rust doesn't support gc, now if the type is behind a pointer or shared 
             reference rust won't let us move the type or get its owned version of it in 
-            the first place, rust doing is this is because we can't have dangling pointer 
+            the first place, rust doing this is because we can't shouldn't have dangling pointer 
             which is a pointer is pointing to no where! solution to this is either cloning 
             the type or move the borrow of it, also is good to know that we can't pass a 
             mutable borrow if there is already an immutable borrow of type cause we can 
